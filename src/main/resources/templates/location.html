@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Location</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Location</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <button onclick="openPopup('add')" class="btn btn-success popup-with-form">Add</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th onclick="sort('id')" scope="col">Id</th>
+                    <th onclick="sort('name')" scope="col">Name</th>
+                    <th onclick="sort('latitude')" scope="col">Latitude</th>
+                    <th onclick="sort('longitude')" scope="col">Longitude</th>
+                    <th scope="col">Edit</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+
+            <div id="choose-page" class="row" style="width: 45%;" >
+                <!-- pagination button -->
+            </div>
+        </section>
+    </div>
+    <div id="popup" class="modal">
+        <!-- popup -->
+    </div>
+</div>
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDr6-T4FGjJSeOkt3ZaLkJXTTiX9KINLxc&callback=myMap"></script>
+
+<script>
+    let modal = document.getElementById("popup");
+
+    let currentPage = 1;
+    let sortingField = 'id';
+    let sortingDirection = 'ASC';  // DESC
+
+    let totalPage;
+    let IdForUpdating;
+
+    $(document).ready(function() {
+        updatePage(currentPage, sortingField, sortingDirection);
+    });
+
+    function openPopup(style){
+        modal.style.display = "block";
+        $("#popup").append($(
+            "<div class=\"modal-content\">\n" +
+            "            <span onclick=\"closePopup()\" class=\"close\">&times;</span>\n" +
+            "            <form id=\"add-form\" class=\"mt-2\">\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Name:</label>\n" +
+            "                    <input id=\"name\" type=\"text\" maxlength=\"255\" name=\"name\"\n" +
+            "                           placeholder=\"Enter name\" class=\"form-control\">\n" +
+            "                </div>\n" +
+            "                <div> To set the coordinates exactly, you need to follow the link <a href='https://www.google.com/maps/@48.5330233,31.1669321,7z'>hear</a>, and right-click on the object and click on the coordinates, then insert them into the fields</div>" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Latitude:</label>\n" +
+            "                    <input oninput='myMap()' id=\"latitude\" type=\"text\" maxlength=\"40\" name=\"latitude\"\n" +
+            "                              placeholder=\"Enter latitude\" class=\"form-control\">\n" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Longitude:</label>\n" +
+            "                    <input oninput='myMap()' id=\"longitude\" type=\"text\" maxlength=\"40\" name=\"longitude\"\n" +
+            "                              placeholder=\"Enter longitude\" class=\"form-control\">\n" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
+            "                    <label class=\"m-1\">Active:</label>\n" +
+            "                    <div class=\"form-check form-switch m-1\">\n" +
+            "                        <input id=\"active\" type=\"checkbox\" name=\"active\" class=\"form-check-input\" checked=\"checked\" role=\"switch\">\n" +
+            "                    </div>\n" +
+            "                </div>\n" +
+            "                <button onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>" +
+            "                <div id='map' style='border-top:20px; height: 400px; width: 100%'></div>" +
+            // "                <iframe id='iframe' width=\"100%\" height=\"600\" src=\"https://maps.google.com/maps?width=100%&amp;height=600&amp;hl=en&amp;coord=52.70967533219885, -8.020019531250002&amp;q=1%20Grafton%20Street%2C%20Dublin%2C%20Ireland&amp;ie=UTF8&amp;t=&amp;z=14&amp;iwloc=B&amp;output=embed\"></iframe>" +
+            "            </form>\n" +
+            "        </div>"
+        ));
+        myMap();
+    }
+
+    function closePopup(){
+        modal.style.display = "none";
+        $("#popup").empty();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closePopup();
+        }
+    }
+
+    function myMap(){
+        let position = {lat: 50.5, lng: 30.5}
+        let latitude = document.getElementById("latitude");
+        if(validationInputTextDouble(latitude)){
+            return false;
+        }
+        let longitude = document.getElementById("longitude");
+        if(validationInputTextDouble(longitude)){
+            return false;
+        }
+        if(latitude.value !== ''){
+            position.lat = parseFloat(latitude.value);
+        }
+        if(longitude.value !== ''){
+            position.lng = parseFloat(longitude.value);
+        }
+        let opt = {
+            center: position,
+            zoom: 13,
+        }
+        let map = new google.maps.Map(document.getElementById("map"), opt);
+
+        let marker = new google.maps.Marker({
+            position: position,
+            map: map
+        });
+    }
+
+    function save(style){
+        let location = {}
+        let locationName = document.getElementById('name');
+        if(validationInputTextEmpty(locationName)){
+            return false;
+        }
+        let latitude = document.getElementById("latitude");
+        if(validationInputTextDouble(latitude)){
+            return false;
+        }
+        let longitude = document.getElementById("longitude");
+        if(validationInputTextDouble(longitude)){
+            return false;
+        }
+        let longitudeActive = document.getElementById('active');
+        location.name = locationName.value;
+        location.latitude = latitude.value;
+        location.longitude = longitude.value;
+        location.active = longitudeActive.checked;
+        if(style === 'add') {
+            $.ajax({
+                type: 'post',
+                url: '../addLocation',
+                data: location,
+                dataType: "json",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /addLocation');
+                },
+                error: function () {
+                    console.log('error /addLocation');
+                }
+            });
+        }
+        if(style === 'edit') {
+            location.id = IdForUpdating;
+            $.ajax({
+                type: 'post',
+                url: '../updateLocation',
+                data: location,
+                dataType: "json",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /updateLocation');
+                },
+                error: function () {
+                    console.log('error /updateLocation');
+                }
+            });
+        }
+    }
+
+    function sort(field){
+        if(sortingDirection === 'ASC'){
+            sortingDirection = 'DESC';
+        } else {
+            sortingDirection = 'ASC';
+        }
+        sortingField = field;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+
+    function updatePage(currentPage, sortingField, sortingDirection){
+        let data = {
+            page: currentPage,
+            field: sortingField,
+            direction: sortingDirection
+        }
+        $.ajax({
+            type: 'get',
+            url: '../getLocations',
+            data: data,
+            dataType: "json",
+            success: function (data){
+                console.log(data);
+                totalPage = data.totalPages;
+                updateList(data)
+                console.log('success /getLocations');
+            },
+            error: function() {
+                console.log('error /getLocations');
+            }
+        });
+    }
+
+    function updateList(data) {
+        $("#list").empty();
+        data.content.forEach((location) => {
+            $("#list").append($("" +
+                "<tr>" +
+                "<td>" +
+                "<p>" + location.id + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + location.name + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + location.latitude + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + location.longitude + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='editForm(" + location.id + ")' class=\"btn btn-warning\" type=\"button\">Edit</button>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='deleteObject(" + location.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                "</td>" +
+                "</tr>"
+
+            ));
+        })
+        paginationButton();
+    }
+
+    function editForm(id){
+        IdForUpdating = id;
+        openPopup('edit');
+        let data = { id: id };
+        $.ajax({
+            type: 'get',
+            url: '../getLocationById',
+            data: data,
+            dataType: "json",
+            success: function (location){
+                console.log('success /getLocationById');
+                let locationName = document.getElementById('name');
+                locationName.value = location.name;
+                let latitude = document.getElementById("latitude");
+                latitude.value = location.latitude;
+                let longitude = document.getElementById("longitude");
+                longitude.value = location.longitude;
+                let active = document.getElementById('active');
+                console.log(location.active);
+                active.checked = location.active;
+            },
+            error: function() {
+                console.log('error /getLocationById');
+            }
+        });
+    }
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../deleteLocationById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /deleteLocationById');
+                updatePage(currentPage, sortingField, sortingDirection)
+            },
+            error: function() {
+                console.log('error /deleteLocationById');
+            }
+        });
+    }
+
+    function paginationButton(){
+        $("#choose-page").empty();
+        if(totalPage > 1){
+            // $("#choose-page").append($("<ul class=\"pagination\">"));
+            if(currentPage !== 1){
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "</div>"
+                ));
+            }
+            let start = currentPage - 2;
+            let finish = currentPage + 2;
+            for(let i = start; i <= finish; i++) {
+                if(i > 0 && i <= totalPage) {
+                    $("#choose-page").append($("" +
+                        "<div class=\"col\">" +
+                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
+                        "</div>"
+                    ));
+                }
+            }
+            if(currentPage !== totalPage) {
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "</div>"
+                ));
+            }
+            // $("#choose-page").append($("</ul>"));
+        }
+    }
+
+    function goFirstPage(){
+        currentPage = 1;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+    function goPreviousPage(){
+        currentPage--;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goToPage(i){
+        currentPage = i;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goNextPage(){
+        currentPage++;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goLastPage(){
+        currentPage = totalPage;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+</script>
+
+</main>
+</body>
+</html>

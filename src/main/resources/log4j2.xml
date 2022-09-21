@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm} [%highlight{%-5level}] %-60c{3.} - %msg%n" disableAnsi="false"/>
+        </Console>
+        <!--<File name="File" fileName="CoffeeLogging.log" append="false">  append="false" якщо треба перезаписувати файл -->
+        <File name="File" fileName="C://resources/logging/admin/${date:yyyy-MM-dd}.log">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm} [%-5level] %-60c{3.} - %msg%n"/>
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Root>
+    </Loggers>
+</Configuration>

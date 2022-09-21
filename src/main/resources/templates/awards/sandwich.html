@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sandwich Awards</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Sandwich Awards</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <button onclick="openPopup('add')" class="btn btn-success popup-with-form">Add</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th onclick="sort('id')" scope="col">Id</th>
+                    <th onclick="sort('sandwich')" scope="col">Sandwich</th>
+                    <th onclick="sort('size')" scope="col">Size</th>
+                    <th onclick="sort('sauce')" scope="col">Sauce</th>
+                    <th onclick="sort('supplement')" scope="col">Supplement</th>
+                    <th onclick="sort('count')" scope="col">Count</th>
+                    <th scope="col">Price</th>
+                    <th onclick="sort('active')" scope="col">Active</th>
+                    <th scope="col">Edit</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+
+            <div id="choose-page" class="row" style="width: 40%;" >
+                <!-- pagination button -->
+            </div>
+
+        </section>
+    </div>
+    <div id="popup" class="modal">
+        <!-- popup -->
+    </div>
+</div>
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+    let modal = document.getElementById("popup");
+    let orderId = "[[${orderId}]]";
+
+    let currentPage = 1;
+    let sortingField = 'id';
+    let sortingDirection = 'ASC';  // DESC
+
+    let Order = null;
+    let totalPage;
+
+    $(document).ready(function() {
+        updatePage(currentPage, sortingField, sortingDirection);
+    });
+
+    function sort(field){
+        if(sortingDirection === 'ASC'){
+            sortingDirection = 'DESC';
+        } else {
+            sortingDirection = 'ASC';
+        }
+        sortingField = field;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+
+    function updatePage(currentPage, sortingField, sortingDirection){
+        let data = {
+            page: currentPage,
+            field: sortingField,
+            direction: sortingDirection,
+            orderId: orderId
+        }
+        $.ajax({
+            type: 'get',
+            url: '../awards/getSandwichOrders',
+            data: data,
+            dataType: "json",
+            success: function (data){
+                totalPage = data.totalPages;
+                updateList(data)
+                console.log('success /awards/getSandwichOrders');
+            },
+            error: function() {
+                console.log('error /awards/getSandwichOrders');
+            }
+        });
+    }
+
+    function updateList(data) {
+        $("#list").empty();
+        data.content.forEach((sandwichOrder) => {
+            let price = 0;
+            price += sandwichOrder.size?.price ?? 0;
+            price += sandwichOrder.sauce?.price ?? 0;
+            price += sandwichOrder.supplement?.price ?? 0;
+            price *= sandwichOrder.count;
+            let sandwich = sandwichOrder.sandwich?.name ?? "not selected";
+            let sauce = sandwichOrder.sauce?.name ?? "not selected";
+            let supplement = sandwichOrder.supplement?.name ?? "not selected";
+            let size = sandwichOrder.size?.name ?? "not selected";
+            $("#list").append($("" +
+                "<tr>" +
+                "<td>" +
+                "<p>" + sandwichOrder.id + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + sandwich + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + size + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + sauce + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + supplement + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + sandwichOrder.count + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + price + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + sandwichOrder.active + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='getSandwichOrderById(" + sandwichOrder.id + ")' class=\"btn btn-warning\" type=\"button\">Edit</button>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='deleteObject(" + sandwichOrder.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                "</td>" +
+                "</tr>"
+            ))
+        })
+        paginationButton();
+    }
+
+    function openPopup(style){
+        modal.style.display = "block";
+        $("#popup").append($(
+            "<div class=\"modal-content\">\n" +
+            "            <span onclick=\"closePopup()\" class=\"close\">&times;</span>\n" +
+            "            <form id=\"add-form\" class=\"mt-2\">\n" +
+            "\n" +
+            "                <div class='row'>\n" +
+            "                   <div class='col'>\n" +
+            "                       <div class=\"form-group mt-2\">\n" +
+            "                           <label>Sandwich:</label>\n" +
+            "                           <select onchange='updateSize()' id='sandwich' name='sandwich' class='form-control'>" +
+            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose sandwich</option>" +
+            "                           </select>" +
+            "                       </div>\n" +
+            "                   </div>\n" +
+            "                   <div class='col'>\n" +
+            "                       <div class=\"form-group mt-2\">\n" +
+            "                           <label>Size:</label>\n" +
+            "                           <select id='size' name='size' class='form-control'>" +
+            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>" +
+            "                           </select>" +
+            "                       </div>\n" +
+            "                   </div>\n" +
+            "               </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Sauce:</label>\n" +
+            "                    <select id='sauce' name='sauce' class='form-control'>" +
+            "                    </select>" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Supplement:</label>\n" +
+            "                    <select id='supplement' name='supplement' class='form-control'>" +
+            "                    </select>" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                     <label>Count:</label>\n" +
+            "                     <input id=\"count\" min='0' value='1' type='number' name=\"count\"\n" +
+            "                            placeholder=\"Enter count\" maxlength='5' class=\"form-control\">\n" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
+            "                    <label class=\"m-1\">Active:</label>\n" +
+            "                    <div class=\"form-check form-switch m-1\">\n" +
+            "                        <input id=\"active\" type=\"checkbox\" name=\"active\" class=\"form-check-input\" checked=\"checked\" role=\"switch\">\n" +
+            "                    </div>\n" +
+            "                </div>\n" +
+            "\n" +
+            "                <button onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>\n" +
+            "            </form>\n" +
+            "        </div>"
+        ));
+        uploadSelect();
+    }
+
+    function save(style){
+        let sandwichOrder = {};
+        let selectSandwich = document.getElementById("sandwich");
+        let sandwich = ($('#sandwich')).find(":selected").data("value");
+        if (sandwich === null){
+            selectSandwich.style.borderColor = "red";
+            return false;
+        } else {
+            selectSandwich.style.borderColor = "#ced4da";
+        }
+
+        let selectSize = document.getElementById("size");
+        let size = ($('#size')).find(":selected").data("value");
+        if (size === null){
+            selectSize.style.borderColor = "red";
+            return false;
+        } else {
+            selectSize.style.borderColor = "#ced4da";
+        }
+
+        let sauce = ($('#sauce')).find(":selected").data("value");
+        let supplement = ($('#supplement')).find(":selected").data("value");
+        let count = document.getElementById('count');
+        let active = document.getElementById('active');
+
+
+        sandwichOrder.sandwich = sandwich
+        sandwichOrder.size = size
+        sandwichOrder.sauce = sauce
+        sandwichOrder.supplement = supplement
+        sandwichOrder.count = parseInt(count.value)
+        sandwichOrder.active = active.checked
+
+        if(style === 'add') {
+            $.ajax({
+                type: 'post',
+                url: '../awards/addSandwichOrder',
+                data: JSON.stringify(sandwichOrder),
+                contentType: "application/json; charset=utf-8",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /awards/addSandwichOrder');
+                },
+                error: function () {
+                    console.log('error /awards/addSandwichOrder');
+                }
+            });
+        }
+
+        if(style === 'edit') {
+            sandwichOrder.id = IdForUpdating;
+            $.ajax({
+                type: 'post',
+                url: '../awards/updateSandwichOrder',
+                data: JSON.stringify(sandwichOrder),
+                contentType: "application/json; charset=utf-8",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /awards/updateSandwichOrder');
+                },
+                error: function () {
+                    console.log('error /awards/updateSandwichOrder');
+                }
+            });
+        }
+    }
+
+    function getSandwichOrderById(id){
+        let data = {id: id}
+        $.ajax({
+            type: 'get',
+            url: '../awards/getSandwichOrderById',
+            data: data,
+            dataType: "json",
+            success: function (sandwichOrder){
+                console.log('success /awards/getOrderById');
+                Order = sandwichOrder;
+                IdForUpdating = Order.id;
+                Order.sandwich.sizes = null;
+                openPopup('edit');
+            },
+            error: function() {
+                console.log('error /awards/getSandwichOrderById');
+            }
+        });
+    }
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../awards/deleteSandwichOrderById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /awards/deleteSandwichOrderById');
+                updatePage(currentPage, sortingField, sortingDirection)
+            },
+            error: function() {
+                console.log('error /awards/deleteSandwichOrderById');
+            }
+        });
+    }
+
+    function closePopup(){
+        Order = null;
+        modal.style.display = "none";
+        $("#popup").empty();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closePopup();
+        }
+    }
+
+    function uploadSelect(){
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveSandwiches',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveSandwiches');
+                data.forEach((sandwich) =>{
+                    sandwich.sizes = null;
+                    if(JSON.stringify(sandwich) === JSON.stringify(Order?.sandwich?? null)) {
+                        $("#sandwich").append($("" +
+                            "<option data-value='" + JSON.stringify(sandwich) + "' selected> " + sandwich.name + "</option>"
+                        ));
+                        updateSize()
+                        let count = document.getElementById("count");
+                        count.value = Order.count;
+                        let active = document.getElementById("active");
+                        active.checked = Order.active;
+                    } else {
+                        $("#sandwich").append($("" +
+                            "<option data-value='" + JSON.stringify(sandwich) + "'> " + sandwich.name + "</option>"
+                        ));
+                    }
+                    // "<option value='" + sandwich + "'> " + sandwich.name + " " + sandwich.sizes.forEach((size) => {size.name}) + "</option>"
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveSandwiches');
+            }
+        });
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveSauces',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveSauces');
+                $("#sauce").append($("" +
+                    "<option data-value='" + JSON.stringify(null) + "'>Without sauce</option>"
+                ));
+                data.forEach((sauce) =>{
+                    if(JSON.stringify(sauce) === JSON.stringify(Order?.sauce?? null)) {
+                        $("#sauce").append($("" +
+                            "<option data-value='" + JSON.stringify(sauce) + "' selected> " + sauce.name + " ("+ sauce.price  + ")</option>"
+                        ));
+                    } else {
+                        $("#sauce").append($("" +
+                            "<option data-value='" + JSON.stringify(sauce) + "'> " + sauce.name + " ("+ sauce.price  + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveSauces');
+            }
+        });
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveSupplements',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveSupplements');
+                $("#supplement").append($("" +
+                    "<option data-value='" + JSON.stringify(null) + "'>Without supplement</option>"
+                ));
+                data.forEach((supplement) =>{
+                    if(JSON.stringify(supplement) === JSON.stringify(Order?.supplement?? null)) {
+                        $("#supplement").append($("" +
+                            "<option data-value='" + JSON.stringify(supplement) + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                        ));
+                    } else {
+                        $("#supplement").append($("" +
+                            "<option data-value='" + JSON.stringify(supplement) + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveSupplements');
+            }
+        });
+    }
+
+    function updateSize(){
+        let sandwich = ($('#sandwich')).find(":selected").data("value");
+        $.ajax({
+            type: 'get',
+            url: '../getSandwichById',
+            data: {id: sandwich.id},
+            dataType: "json",
+            success: function (data){
+                console.log('success /getSandwichById');
+                $("#size").empty();
+                $("#size").append($("<option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>"));
+                data.sizes.forEach((size) =>{
+                    if(JSON.stringify(size) === JSON.stringify(Order?.size?? null)){
+                        $("#size").append($("" +
+                            "<option data-value='" + JSON.stringify(size) + "' selected> " + size.name + " (" + size.price + ")</option>"
+                        ));
+                    } else {
+                        $("#size").append($("" +
+                            "<option data-value='" + JSON.stringify(size) + "'> " + size.name + " (" + size.price + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getSandwichById');
+            }
+        });
+    }
+
+    function paginationButton(){
+        $("#choose-page").empty();
+        if(totalPage > 1){
+            // $("#choose-page").append($("<ul class=\"pagination\">"));
+            if(currentPage !== 1){
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "</div>"
+                ));
+            }
+            let start = currentPage - 2;
+            let finish = currentPage + 2;
+            for(let i = start; i <= finish; i++) {
+                if(i > 0 && i <= totalPage) {
+                    $("#choose-page").append($("" +
+                        "<div class=\"col\">" +
+                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
+                        "</div>"
+                    ));
+                }
+            }
+            if(currentPage !== totalPage) {
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "</div>"
+                ));
+            }
+            // $("#choose-page").append($("</ul>"));
+        }
+    }
+
+    function goFirstPage(){
+        currentPage = 1;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+    function goPreviousPage(){
+        currentPage--;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goToPage(i){
+        currentPage = i;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goNextPage(){
+        currentPage++;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goLastPage(){
+        currentPage = totalPage;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+</script>
+
+</main>
+</body>
+</html>

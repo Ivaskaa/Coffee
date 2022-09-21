@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Privacy policy</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Privacy policy</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section id="content" class="content">
+
+        </section>
+    </div>
+</div>
+
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+    $(document).ready(function() {
+        updatePage();
+    });
+
+    function save(){
+        let text = document.getElementById('text');
+        if(validationInputTextEmpty(text)){
+            return false;
+        }
+        let data = {
+            text: text.value
+        }
+        $.ajax({
+            type: 'post',
+            url: '../updatePrivacyPolicy',
+            data: data,
+            dataType: "json",
+            success: function (success) {
+                console.log(success + ' /updatePrivacyPolicy');
+            },
+            error: function () {
+                console.log('error /updatePrivacyPolicy');
+            }
+        });
+    }
+
+    function updatePage(){
+        $.ajax({
+            type: 'get',
+            url: '../getPrivacyPolicy',
+            dataType: "json",
+            success: function (data){
+                $("#content").empty();
+                $("#content").append($("" +
+                    "<div class=\"form-group mt-2\">" +
+                    "   <label>Text:</label>" +
+                    "   <textarea style='height: 350px' placeholder='Enter privacy policies text' id='text' " +
+                    "       class='form-control' maxlength=\"5000\">" + data.text + "</textarea>" +
+                    "</div>" +
+                    "<button onclick='save()' type='button' class='btn btn-success mt-2'>Save</button>"
+                ));
+                console.log('success /getPrivacyPolicy');
+            },
+            error: function() {
+                console.log('error /getPrivacyPolicy');
+            }
+        });
+    }
+</script>
+
+</main>
+</body>
+</html>

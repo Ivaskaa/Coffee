@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dessert Awards</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Dessert Awards</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <button onclick="openPopup('add')" class="btn btn-success popup-with-form">Add</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th onclick="sort('id')" scope="col">Id</th>
+                    <th onclick="sort('dessert')" scope="col">Dessert</th>
+                    <th onclick="sort('size')" scope="col">Size</th>
+                    <th onclick="sort('syrup')" scope="col">Syrup</th>
+                    <th onclick="sort('supplement')" scope="col">Supplement</th>
+                    <th onclick="sort('count')" scope="col">Count</th>
+                    <th scope="col">Price</th>
+                    <th onclick="sort('active')" scope="col">Active</th>
+                    <th scope="col">Edit</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+
+            <div id="choose-page" class="row" style="width: 40%;" >
+                <!-- pagination button -->
+            </div>
+
+        </section>
+    </div>
+    <div id="popup" class="modal">
+        <!-- popup -->
+    </div>
+</div>
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+    let modal = document.getElementById("popup");
+    let orderId = "[[${orderId}]]";
+
+    let currentPage = 1;
+    let sortingField = 'id';
+    let sortingDirection = 'ASC';  // DESC
+
+    let Order = null;
+    let totalPage;
+
+    $(document).ready(function() {
+        updatePage(currentPage, sortingField, sortingDirection);
+    });
+
+    function sort(field){
+        if(sortingDirection === 'ASC'){
+            sortingDirection = 'DESC';
+        } else {
+            sortingDirection = 'ASC';
+        }
+        sortingField = field;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+
+    function updatePage(currentPage, sortingField, sortingDirection){
+        let data = {
+            page: currentPage,
+            field: sortingField,
+            direction: sortingDirection,
+            orderId: orderId
+        }
+        $.ajax({
+            type: 'get',
+            url: '../awards/getDessertOrders',
+            data: data,
+            dataType: "json",
+            success: function (data){
+                totalPage = data.totalPages;
+                updateList(data)
+                console.log('success /awards/getDessertOrders');
+            },
+            error: function() {
+                console.log('error /awards/getDessertOrders');
+            }
+        });
+    }
+
+    function updateList(data) {
+        $("#list").empty();
+        data.content.forEach((dessertOrder) => {
+            let price = 0;
+            price += dessertOrder.size?.price ?? 0;
+            price += dessertOrder.syrup?.price ?? 0;
+            price += dessertOrder.supplement?.price ?? 0;
+            price *= dessertOrder.count;
+            let dessert = dessertOrder.dessert?.name ?? "not selected";
+            let syrup = dessertOrder.syrup?.name ?? "not selected";
+            let supplement = dessertOrder.supplement?.name ?? "not selected";
+            let size = dessertOrder.size?.name ?? "not selected";
+            $("#list").append($("" +
+                "<tr>" +
+                "<td>" +
+                "<p>" + dessertOrder.id + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + dessert + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + size + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + syrup + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + supplement + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + dessertOrder.count + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + price + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + dessertOrder.active + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='getDessertOrderById(" + dessertOrder.id + ")' class=\"btn btn-warning\" type=\"button\">Edit</button>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='deleteObject(" + dessertOrder.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                "</td>" +
+                "</tr>"
+            ))
+        })
+        paginationButton();
+    }
+
+    function openPopup(style){
+        modal.style.display = "block";
+        $("#popup").append($(
+            "<div class=\"modal-content\">\n" +
+            "            <span onclick=\"closePopup()\" class=\"close\">&times;</span>\n" +
+            "            <form id=\"add-form\" class=\"mt-2\">\n" +
+            "\n" +
+            "                <div class='row'>\n" +
+            "                   <div class='col'>\n" +
+            "                       <div class=\"form-group mt-2\">\n" +
+            "                           <label>Dessert:</label>\n" +
+            "                           <select onchange='updateSize()' id='dessert' name='dessert' class='form-control'>" +
+            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose dessert</option>" +
+            "                           </select>" +
+            "                       </div>\n" +
+            "                   </div>\n" +
+            "                   <div class='col'>\n" +
+            "                       <div class=\"form-group mt-2\">\n" +
+            "                           <label>Size:</label>\n" +
+            "                           <select id='size' name='size' class='form-control'>" +
+            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>" +
+            "                           </select>" +
+            "                       </div>\n" +
+            "                   </div>\n" +
+            "               </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Syrup:</label>\n" +
+            "                    <select id='syrup' name='syrup' class='form-control'>" +
+            "                    </select>" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Supplement:</label>\n" +
+            "                    <select id='supplement' name='supplement' class='form-control'>" +
+            "                    </select>" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                     <label>Count:</label>\n" +
+            "                     <input id=\"count\" min='0' value='1' type='number' name=\"count\"\n" +
+            "                            placeholder=\"Enter count\" maxlength='5' class=\"form-control\">\n" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
+            "                    <label class=\"m-1\">Active:</label>\n" +
+            "                    <div class=\"form-check form-switch m-1\">\n" +
+            "                        <input id=\"active\" type=\"checkbox\" name=\"active\" class=\"form-check-input\" checked=\"checked\" role=\"switch\">\n" +
+            "                    </div>\n" +
+            "                </div>\n" +
+            "\n" +
+            "                <button onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>\n" +
+            "            </form>\n" +
+            "        </div>"
+        ));
+        uploadSelect();
+    }
+
+    function save(style){
+        let dessertOrder = {};
+        let selectDessert = document.getElementById("dessert");
+        let dessert = ($('#dessert')).find(":selected").data("value");
+        if (dessert === null){
+            selectDessert.style.borderColor = "red";
+            return false;
+        } else {
+            selectDessert.style.borderColor = "#ced4da";
+        }
+
+        let selectSize = document.getElementById("size");
+        let size = ($('#size')).find(":selected").data("value");
+        if (size === null){
+            selectSize.style.borderColor = "red";
+            return false;
+        } else {
+            selectSize.style.borderColor = "#ced4da";
+        }
+
+        let syrup = ($('#syrup')).find(":selected").data("value");
+        let supplement = ($('#supplement')).find(":selected").data("value");
+        let count = document.getElementById('count');
+        let active = document.getElementById('active');
+
+
+        dessertOrder.dessert = dessert
+        dessertOrder.size = size
+        dessertOrder.syrup = syrup
+        dessertOrder.supplement = supplement
+        dessertOrder.count = parseInt(count.value)
+        dessertOrder.active = active.checked
+
+        if(style === 'add') {
+            $.ajax({
+                type: 'post',
+                url: '../awards/addDessertOrder',
+                data: JSON.stringify(dessertOrder),
+                contentType: "application/json; charset=utf-8",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /awards/addDessertOrder');
+                },
+                error: function () {
+                    console.log('error /awards/addDessertOrder');
+                }
+            });
+        }
+
+        if(style === 'edit') {
+            dessertOrder.id = IdForUpdating;
+            $.ajax({
+                type: 'post',
+                url: '../awards/updateDessertOrder',
+                data: JSON.stringify(dessertOrder),
+                contentType: "application/json; charset=utf-8",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /awards/updateDessertOrder');
+                },
+                error: function () {
+                    console.log('error /awards/updateDessertOrder');
+                }
+            });
+        }
+    }
+
+    function getDessertOrderById(id){
+        let data = {id: id}
+        $.ajax({
+            type: 'get',
+            url: '../awards/getDessertOrderById',
+            data: data,
+            dataType: "json",
+            success: function (dessertOrder){
+                console.log('success /awards/getOrderById');
+                Order = dessertOrder;
+                IdForUpdating = Order.id;
+                Order.dessert.sizes = null;
+                openPopup('edit');
+            },
+            error: function() {
+                console.log('error /awards/getDessertOrderById');
+            }
+        });
+    }
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../awards/deleteDessertOrderById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /awards/deleteDessertOrderById');
+                updatePage(currentPage, sortingField, sortingDirection)
+            },
+            error: function() {
+                console.log('error /awards/deleteDessertOrderById');
+            }
+        });
+    }
+
+    function closePopup(){
+        Order = null;
+        modal.style.display = "none";
+        $("#popup").empty();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closePopup();
+        }
+    }
+
+    function uploadSelect(){
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveDesserts',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveDesserts');
+                data.forEach((dessert) =>{
+                    dessert.sizes = null;
+                    if(JSON.stringify(dessert) === JSON.stringify(Order?.dessert?? null)) {
+                        $("#dessert").append($("" +
+                            "<option data-value='" + JSON.stringify(dessert) + "' selected> " + dessert.name + "</option>"
+                        ));
+                        updateSize()
+                        let count = document.getElementById("count");
+                        count.value = Order.count;
+                        let active = document.getElementById("active");
+                        active.checked = Order.active;
+                    } else {
+                        $("#dessert").append($("" +
+                            "<option data-value='" + JSON.stringify(dessert) + "'> " + dessert.name + "</option>"
+                        ));
+                    }
+                    // "<option value='" + dessert + "'> " + dessert.name + " " + dessert.sizes.forEach((size) => {size.name}) + "</option>"
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveDesserts');
+            }
+        });
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveSyrups',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveSyrups');
+                $("#syrup").append($("" +
+                    "<option data-value='" + JSON.stringify(null) + "'>Without syrup</option>"
+                ));
+                data.forEach((syrup) =>{
+                    if(JSON.stringify(syrup) === JSON.stringify(Order?.syrup?? null)) {
+                        $("#syrup").append($("" +
+                            "<option data-value='" + JSON.stringify(syrup) + "' selected> " + syrup.name + " ("+ syrup.price  + ")</option>"
+                        ));
+                    } else {
+                        $("#syrup").append($("" +
+                            "<option data-value='" + JSON.stringify(syrup) + "'> " + syrup.name + " ("+ syrup.price  + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveSyrups');
+            }
+        });
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveSupplements',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveSupplements');
+                $("#supplement").append($("" +
+                    "<option data-value='" + JSON.stringify(null) + "'>Without supplement</option>"
+                ));
+                data.forEach((supplement) =>{
+                    if(JSON.stringify(supplement) === JSON.stringify(Order?.supplement?? null)) {
+                        $("#supplement").append($("" +
+                            "<option data-value='" + JSON.stringify(supplement) + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                        ));
+                    } else {
+                        $("#supplement").append($("" +
+                            "<option data-value='" + JSON.stringify(supplement) + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveSupplements');
+            }
+        });
+    }
+
+    function updateSize(){
+        let dessert = ($('#dessert')).find(":selected").data("value");
+        $.ajax({
+            type: 'get',
+            url: '../getDessertById',
+            data: {id: dessert.id},
+            dataType: "json",
+            success: function (data){
+                console.log('success /getDessertById');
+                $("#size").empty();
+                $("#size").append($("<option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>"));
+                data.sizes.forEach((size) =>{
+                    if(JSON.stringify(size) === JSON.stringify(Order?.size?? null)){
+                        $("#size").append($("" +
+                            "<option data-value='" + JSON.stringify(size) + "' selected> " + size.name + " (" + size.price + ")</option>"
+                        ));
+                    } else {
+                        $("#size").append($("" +
+                            "<option data-value='" + JSON.stringify(size) + "'> " + size.name + " (" + size.price + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getDessertById');
+            }
+        });
+    }
+
+    function paginationButton(){
+        $("#choose-page").empty();
+        if(totalPage > 1){
+            // $("#choose-page").append($("<ul class=\"pagination\">"));
+            if(currentPage !== 1){
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "</div>"
+                ));
+            }
+            let start = currentPage - 2;
+            let finish = currentPage + 2;
+            for(let i = start; i <= finish; i++) {
+                if(i > 0 && i <= totalPage) {
+                    $("#choose-page").append($("" +
+                        "<div class=\"col\">" +
+                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
+                        "</div>"
+                    ));
+                }
+            }
+            if(currentPage !== totalPage) {
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "</div>"
+                ));
+            }
+            // $("#choose-page").append($("</ul>"));
+        }
+    }
+
+    function goFirstPage(){
+        currentPage = 1;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+    function goPreviousPage(){
+        currentPage--;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goToPage(i){
+        currentPage = i;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goNextPage(){
+        currentPage++;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goLastPage(){
+        currentPage = totalPage;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+</script>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Milk</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Milk</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <button onclick="openPopup('add')" class="btn btn-success popup-with-form">Add</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th onclick="sort('id')" scope="col">Id</th>
+                    <th onclick="sort('name')" scope="col">Name</th>
+                    <th onclick="sort('price')" scope="col">Price</th>
+                    <th scope="col">Active</th>
+                    <th scope="col">Edit</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+            <div id="choose-page" class="row" style="width: 40%;" >
+                <!-- pagination button -->
+            </div>
+        </section>
+    </div>
+    <div id="popup" class="modal">
+        <!-- popup -->
+    </div>
+</div>
+
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+    let modal = document.getElementById("popup");
+
+    let currentPage = 1;
+    let sortingField = 'id';
+    let sortingDirection = 'ASC';  // DESC
+
+    let totalPage;
+    let IdForUpdating;
+
+    $(document).ready(function() {
+        updatePage(currentPage, sortingField, sortingDirection);
+    });
+
+    function openPopup(style){
+        modal.style.display = "block";
+        $("#popup").append($(
+            "<div class=\"modal-content\">\n" +
+            "            <span onclick=\"closePopup()\" class=\"close\">&times;</span>\n" +
+            "            <form id=\"add-form\" class=\"mt-2\">\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Name:</label>\n" +
+            "                    <input id=\"name\" type=\"text\" maxlength=\"255\" name=\"name\"\n" +
+            "                           placeholder=\"Enter name\" class=\"form-control\">\n" +
+            "                </div>\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Price:</label>\n" +
+            "                    <input id=\"price\" type=\"text\" maxlength=\"20\" name=\"price\"\n" +
+            "                              placeholder=\"Enter price\" class=\"form-control\">\n" +
+            "                </div>\n" +
+            "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
+            "                    <label class=\"m-1\">Active:</label>\n" +
+            "                    <div class=\"form-check form-switch m-1\">\n" +
+            "                        <input id=\"active\" type=\"checkbox\" name=\"active\" class=\"form-check-input\" checked=\"checked\" role=\"switch\">\n" +
+            "                    </div>\n" +
+            "                </div>\n" +
+            "                <button onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>\n" +
+            "            </form>\n" +
+            "        </div>"
+        ));
+    }
+
+    function closePopup(){
+        modal.style.display = "none";
+        $("#popup").empty();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+            $("#popup").empty();
+        }
+    }
+
+    function save(style){
+        let milk = {
+            name: '',
+            price: '',
+            active: false
+        }
+        let milkName = document.getElementById('name');
+        if(validationInputTextEmpty(milkName)){
+            return false;
+        }
+        let milkPrice = document.getElementById('price');
+        if(validationInputTextEmpty(milkPrice)){
+            return false;
+        }
+        if(validationInputTextDouble(milkPrice)){
+            return false;
+        }
+        let milkActive = document.getElementById('active');
+        milk.name = milkName.value;
+        milk.price = milkPrice.value;
+        milk.price = (parseInt(milk.price * 100)) / 100;
+        milk.active = milkActive.checked;
+
+        if(style === 'add') {
+            $.ajax({
+                type: 'post',
+                url: '../addMilk',
+                data: milk,
+                dataType: "json",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /addMilk');
+                },
+                error: function () {
+                    console.log('error /addMilk');
+                }
+            });
+        }
+
+        if(style === 'edit') {
+            milk.id = IdForUpdating;
+            $.ajax({
+                type: 'post',
+                url: '../updateMilk',
+                data: milk,
+                dataType: "json",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /updateMilk');
+                },
+                error: function () {
+                    console.log('error /updateMilk');
+                }
+            });
+        }
+    }
+
+    function sort(field){
+        if(sortingDirection === 'ASC'){
+            sortingDirection = 'DESC';
+        } else {
+            sortingDirection = 'ASC';
+        }
+        sortingField = field;
+        updatePage(currentPage, sortingField, sortingDirection);
+
+    }
+
+    function updatePage(currentPage, sortingField, sortingDirection){
+        let data = {
+            page: currentPage,
+            field: sortingField,
+            direction: sortingDirection
+        }
+        $.ajax({
+            type: 'get',
+            url: '../getMilks',
+            data: data,
+            dataType: "json",
+            success: function (data){
+                totalPage = data.totalPages;
+                updateList(data)
+                console.log('success /getMilks');
+            },
+            error: function() {
+                console.log('error /getMilks');
+            }
+        });
+    }
+
+    function updateList(data) {
+        $("#list").empty();
+        data.content.forEach((milk) => {
+            $("#list").append($("" +
+                "<tr>" +
+                "<td>" +
+                "<p>" + milk.id + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + milk.name + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + milk.price + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + milk.active + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='editForm(" + milk.id + ")' class=\"btn btn-warning\" type=\"button\">Edit</button>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='deleteObject(" + milk.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                "</td>" +
+                "</tr>"
+            ));
+        })
+        paginationButton();
+    }
+
+    function editForm(id){
+        IdForUpdating = id;
+        openPopup('edit');
+        let data = { id: id };
+        $.ajax({
+            type: 'get',
+            url: '../getMilkById',
+            data: data,
+            dataType: "json",
+            success: function (milk){
+                console.log('success /getMilkById');
+                let milkName = document.getElementById('name');
+                milkName.value = milk.name;
+                let milkPrice = document.getElementById('price');
+                milkPrice.value = milk.price;
+                let coffeeActive = document.getElementById('active');
+                coffeeActive.checked = milk.active;
+            },
+            error: function() {
+                console.log('error /getMilkById');
+            }
+        });
+    }
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../deleteMilkById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /deleteMilkById');
+                updatePage(currentPage, sortingField, sortingDirection)
+            },
+            error: function() {
+                console.log('error /deleteMilkById');
+            }
+        });
+    }
+
+    function paginationButton(){
+        $("#choose-page").empty();
+        if(totalPage > 1){
+            // $("#choose-page").append($("<ul class=\"pagination\">"));
+            if(currentPage !== 1){
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "</div>"
+                ));
+            }
+            let start = currentPage - 2;
+            let finish = currentPage + 2;
+            for(let i = start; i <= finish; i++) {
+                if(i > 0 && i <= totalPage) {
+                    $("#choose-page").append($("" +
+                        "<div class=\"col\">" +
+                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
+                        "</div>"
+                    ));
+                }
+            }
+            if(currentPage !== totalPage) {
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "</div>"
+                ));
+            }
+            // $("#choose-page").append($("</ul>"));
+        }
+    }
+
+    function goFirstPage(){
+        currentPage = 1;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+
+    function goPreviousPage(){
+        currentPage--;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+
+    function goToPage(i){
+        currentPage = i;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goNextPage(){
+        currentPage++;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goLastPage(){
+        currentPage = totalPage;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+</script>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Order</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Order</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th onclick="sort('id')" scope="col">Id
+                        <input id="searchId" oninput="search()" type="text" maxlength="20" class="form-control" style="width: 80px">
+                    </th>
+                    <th onclick="sort('user')" scope="col">User
+                        <input id="searchName" oninput="search()" type="text" maxlength="20" class="form-control" style="width: 80px">
+                    </th>
+
+                    <th onclick="sort('date')" scope="col">Date
+                        <input id="searchDate" oninput="search()" type="text" maxlength="20" class="form-control" style="width: 80px">
+                    </th>
+                    <th onclick="sort('time')" scope="col">Time
+                        <input id="searchTime" oninput="search()" type="text" maxlength="20" class="form-control" style="width: 80px">
+                    </th>
+                    <th onclick="sort('city')" scope="col">City
+                        <input id="searchCity" oninput="search()" type="text" maxlength="20" class="form-control" style="width: 80px">
+                    </th>
+                    <th onclick="sort('home')" scope="col">Home
+                        <input id="searchHome" oninput="search()" type="text" maxlength="20" class="form-control" style="width: 80px">
+                    </th>
+                    <th onclick="sort('entrance')" scope="col">Entrance
+                        <input id="searchEntrance" oninput="search()" type="text" maxlength="20" class="form-control" style="width: 80px">
+                    </th>
+                    <th onclick="sort('flat')" scope="col">Flat
+                        <input id="searchFlat" oninput="search()" type="text" maxlength="20" class="form-control" style="width: 80px">
+                    </th>
+                    <th scope="col">Coffees</th>
+                    <th scope="col">Teas</th>
+                    <th scope="col">Desserts</th>
+                    <th scope="col">Sandwiches</th>
+                    <th scope="col">Snacks</th>
+                    <th scope="col">Total price</th>
+                    <th scope="col">Info</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+
+            <div id="choose-page" class="row" style="width: 40%;" >
+                <!-- pagination button -->
+            </div>
+        </section>
+    </div>
+
+    <div id="popup" class="modal">
+        <!-- popup -->
+    </div>
+</div>
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+    let modal = document.getElementById("popup");
+
+    let currentPage = 1;
+    let sortingField = 'id';
+    let sortingDirection = 'ASC';  // DESC
+
+    let searchId = "";
+    let searchName = "";
+    let searchDate = "";
+    let searchTime = "";
+    let searchCity = "";
+    let searchHome = "";
+    let searchEntrance = "";
+    let searchFlat = "";
+
+    let totalPage;
+
+    $(document).ready(function() {
+        search();
+    });
+
+    function sort(field){
+        if(sortingDirection === 'ASC'){
+            sortingDirection = 'DESC';
+        } else {
+            sortingDirection = 'ASC';
+        }
+        sortingField = field;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+
+    function search(){
+        let id = document.getElementById('searchId');
+        searchId = id.value;
+        let name = document.getElementById('searchName');
+        searchName = name.value;
+        let date = document.getElementById('searchDate');
+        searchDate = date.value;
+        let time = document.getElementById('searchTime');
+        searchTime = time.value;
+        let city = document.getElementById('searchCity');
+        searchCity = city.value;
+        let home = document.getElementById('searchHome');
+        searchHome = home.value;
+        let entrance = document.getElementById('searchEntrance');
+        searchEntrance = entrance.value;
+        let flat = document.getElementById('searchFlat');
+        searchFlat = flat.value;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+
+    function updatePage(currentPage, sortingField, sortingDirection){
+        let data = {
+            page: currentPage,
+            field: sortingField,
+            direction: sortingDirection,
+            id: searchId,
+            name: searchName,
+            date: searchDate,
+            time: searchTime,
+            city: searchCity,
+            home: searchHome,
+            entrance: searchEntrance,
+            flat: searchFlat
+        }
+        $.ajax({
+            type: 'get',
+            url: '../getOrders',
+            data: data,
+            dataType: "json",
+            success: function (data){
+                totalPage = data.totalPages;
+                updateList(data)
+                console.log('success /getOrders');
+            },
+            error: function() {
+                console.log('error /getOrders');
+            }
+        });
+    }
+
+    function updateList(data) {
+        console.log(data);
+        $("#list").empty();
+        data.content.forEach((order) => {
+            let OrderPrice = 0;
+            order.coffeeOrder.forEach((coffeeOrder) =>{
+                let coffeePrice = 0;
+                coffeePrice += coffeeOrder?.size?.price ?? 0;
+                coffeePrice += coffeeOrder?.alcohol?.price ?? 0;
+                coffeePrice += coffeeOrder?.syrup?.price ?? 0;
+                coffeePrice += coffeeOrder?.milk?.price ?? 0;
+                coffeePrice += coffeeOrder?.supplement?.price ?? 0;
+                coffeePrice *= coffeeOrder?.count;
+                OrderPrice += coffeePrice;
+                console.log("coffeePrice: " + coffeePrice);
+            });
+            order.teaOrder.forEach((teaOrder) =>{
+                let teaPrice = 0;
+                teaPrice += teaOrder?.size?.price ?? 0;
+                teaPrice += teaOrder?.syrup?.price ?? 0;
+                teaPrice += teaOrder?.milk?.price ?? 0;
+                teaPrice += teaOrder?.supplement?.price ?? 0;
+                teaPrice *= teaOrder?.count;
+                OrderPrice += teaPrice;
+                console.log("teaPrice: " + teaPrice);
+            });
+            order.dessertOrder.forEach((dessertOrder) =>{
+                let dessertPrice = 0;
+                dessertPrice += dessertOrder?.size?.price ?? 0;
+                dessertPrice += dessertOrder?.syrup?.price ?? 0;
+                dessertPrice += dessertOrder?.supplement?.price ?? 0;
+                dessertPrice *= dessertOrder?.count;
+                OrderPrice += dessertPrice;
+                console.log("dessertPrice: " + dessertPrice);
+            });
+            order.sandwichOrder.forEach((sandwichOrder) =>{
+                let sandwichPrice = 0;
+                sandwichPrice += sandwichOrder?.size?.price ?? 0;
+                sandwichPrice += sandwichOrder?.sauce?.price ?? 0;
+                sandwichPrice += sandwichOrder?.supplement?.price ?? 0;
+                sandwichPrice *= sandwichOrder?.count;
+                OrderPrice += sandwichPrice;
+                console.log("sandwichPrice: " + sandwichPrice);
+            });
+            order.snackOrder.forEach((snackOrder) =>{
+                let snackPrice = 0;
+                snackPrice += snackOrder?.size?.price ?? 0;
+                snackPrice += snackOrder?.sauce?.price ?? 0;
+                snackPrice += snackOrder?.supplement?.price ?? 0;
+                snackPrice *= snackOrder?.count;
+                OrderPrice += snackPrice;
+                console.log("snackPrice: " + snackPrice);
+            });
+            OrderPrice = (parseInt(OrderPrice * 100)) / 100;
+            let city = order.city?.name ?? "not selected";
+            let user = order.user?.name ?? "not selected";
+            let home = (order.home == null) ? "not selected" : order.home;
+            let entrance = (order.entrance == null) ? "not selected" : order.entrance;
+            let flat = (order.flat == null) ? "not selected" : order.flat;
+            console.log("coffeeOrderPrice: " + OrderPrice);
+            $("#list").append($("" +
+                "<tr>" +
+                "<td>" +
+                "<p>" + order.id + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + user + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + order.date + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + order.time + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + city + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + home + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + entrance + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + flat + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<form method='get' action='/coffeeOrder' enctype=\"multipart/form-data\">" +
+                    "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
+                "</form>" +
+                "</td>" +
+                "<td>" +
+                "<form method='get' action='/teaOrder' enctype=\"multipart/form-data\">" +
+                    "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
+                "</form>" +
+                "</td>" +
+                "<td>" +
+                "<form method='get' action='/dessertOrder' enctype=\"multipart/form-data\">" +
+                    "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
+                "</form>" +
+                "</td>" +
+                "<td>" +
+                "<form method='get' action='/sandwichOrder' enctype=\"multipart/form-data\">" +
+                    "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
+                "</form>" +
+                "</td>" +
+                "<td>" +
+                "<form method='get' action='/snackOrder' enctype=\"multipart/form-data\">" +
+                    "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
+                "</form>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + OrderPrice + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='openPopup(" + order.id + ")' class='btn btn-primary' >All Info</button>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='deleteObject(" + order.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                "</td>" +
+                "</tr>"
+            ));
+        })
+        paginationButton();
+    }
+
+    function openPopup(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'get',
+            url: '../getOrderById',
+            data: data,
+            dataType: "json",
+            success: function (order){
+                console.log(order);
+                console.log('success /getOrderById');
+                let city = order.city?.name ?? "not selected";
+                let user = order.user?.name ?? "not selected";
+                let home = (order.home == null) ? "not selected" : order.home;
+                let entrance = (order.entrance == null) ? "not selected" : order.entrance;
+                let flat = (order.flat == null) ? "not selected" : order.flat;
+                let paymentForm = order?.paymentForm?.name ?? "not selected";
+                let prepareCash = (order.prepareCash == null) ? "not selected" : order.prepareCash;
+                let comment = (order.comment == null) ? "not selected" : order.comment;
+                modal.style.display = "block";
+                $("#popup").append($(
+                    "<div class=\"modal-content\">\n" +
+                    "          <span onclick=\"closePopup()\" class=\"close\">&times;</span>\n" +
+                    "               <div style='margin: 20px' class=\"form-group mt-2\">\n" +
+                    "                   <label>User:</label>\n" +
+                    "                   <p style='margin: 0px'>" + user + "</p>" +
+                    "               </div>\n" +
+                    "               <div style='margin: 20px' class=\"form-group mt-2\">\n" +
+                    "                   <label>Date:</label>\n" +
+                    "                   <p style='margin: 0px'>" + order.date + "</p>" +
+                    "               </div>\n" +
+                    "               <div style='margin: 20px' class=\"form-group mt-2\">\n" +
+                    "                   <label>Time:</label>\n" +
+                    "                   <p style='margin: 0px'>" + order.time + "</p>" +
+                    "               </div>\n" +
+                    "               <div style='margin: 20px' class='row'>" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>City:</label>\n" +
+                    "                           <p style='margin: 0px'>" + city + "</p>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Home:</label>\n" +
+                    "                           <p style='margin: 0px'>" + home + "</p>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Entrance:</label>\n" +
+                    "                           <p style='margin: 0px'>" + entrance + "</p>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Flat:</label>\n" +
+                    "                           <p style='margin: 0px'>" + flat + "</p>" +
+                    "                       </div>\n" +
+                    "               </div>\n" +
+                    "               <div style='margin: 20px' class='row'>" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Payment form:</label>\n" +
+                    "                           <p style='margin: 0px'>" + paymentForm + "</p>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Prepare cash:</label>\n" +
+                    "                           <p style='margin: 0px'>" + prepareCash + "</p>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Comment:</label>\n" +
+                    "                           <p style='margin: 0px'>" + comment + "</p>" +
+                    "                       </div>" +
+                    "               </div>" +
+                    "               <div style='margin: 20px' class='row'>" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Coffees:</label>\n" +
+                    "                           <form method='get' action='/coffeeOrder' enctype=\"multipart/form-data\">" +
+                    "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
+                    "                           </form>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Teas:</label>\n" +
+                    "                           <form method='get' action='/teaOrder' enctype=\"multipart/form-data\">" +
+                    "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
+                    "                           </form>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Desserts:</label>\n" +
+                    "                           <form method='get' action='/dessertOrder' enctype=\"multipart/form-data\">" +
+                    "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
+                    "                           </form>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Sandwiches:</label>\n" +
+                    "                           <form method='get' action='/sandwichOrder' enctype=\"multipart/form-data\">" +
+                    "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
+                    "                           </form>" +
+                    "                       </div>\n" +
+                    "                   <div class='col'" +
+                    "                       <div class=\"form-group mt-2\">\n" +
+                    "                           <label>Snacks:</label>\n" +
+                    "                           <form method='get' action='/snackOrder' enctype=\"multipart/form-data\">" +
+                    "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
+                    "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
+                    "                           </form>" +
+                    "                       </div>\n" +
+                    "               </div>\n" +
+                    "        </div>"
+                ));
+            },
+            error: function() {
+                console.log('error /getOrderById');
+            }
+        });
+    }
+
+    function closePopup(){
+        modal.style.display = "none";
+        $("#popup").empty();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+            $("#popup").empty();
+        }
+    }
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../deleteOrderById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /deleteOrderById');
+                updatePage(currentPage, sortingField, sortingDirection)
+            },
+            error: function() {
+                console.log('error /deleteOrderById');
+            }
+        });
+    }
+
+    function paginationButton(){
+        $("#choose-page").empty();
+        if(totalPage > 1){
+            // $("#choose-page").append($("<ul class=\"pagination\">"));
+            if(currentPage !== 1){
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "</div>"
+                ));
+            }
+            let start = currentPage - 2;
+            let finish = currentPage + 2;
+            for(let i = start; i <= finish; i++) {
+                if(i > 0 && i <= totalPage) {
+                    $("#choose-page").append($("" +
+                        "<div class=\"col\">" +
+                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
+                        "</div>"
+                    ));
+                }
+            }
+            if(currentPage !== totalPage) {
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "</div>"
+                ));
+            }
+            // $("#choose-page").append($("</ul>"));
+        }
+    }
+
+    function goFirstPage(){
+        currentPage = 1;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+    function goPreviousPage(){
+        currentPage--;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goToPage(i){
+        currentPage = i;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goNextPage(){
+        currentPage++;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goLastPage(){
+        currentPage = totalPage;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+</script>
+
+</main>
+</body>
+</html>

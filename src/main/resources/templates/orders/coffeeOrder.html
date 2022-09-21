@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Coffee Orders</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <a th:href="@{/order}" class="btn btn-primary">Back</a>
+                <h1 class="m-0">Coffee Orders</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th onclick="sort('id')" scope="col">Id</th>
+                    <th onclick="sort('coffee')" scope="col">Coffee</th>
+                    <th onclick="sort('alcohol')" scope="col">Alcohol</th>
+                    <th onclick="sort('syrup')" scope="col">Syrup</th>
+                    <th onclick="sort('milk')" scope="col">Milk</th>
+                    <th onclick="sort('supplement')" scope="col">Supplement</th>
+                    <th onclick="sort('size')" scope="col">Size</th>
+                    <th onclick="sort('count')" scope="col">Count</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+
+            <div id="choose-page" class="row" style="width: 40%;" >
+                <!-- pagination button -->
+            </div>
+        </section>
+    </div>
+    <div id="popup" class="modal">
+        <!-- popup -->
+    </div>
+</div>
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+    let orderId = "[[${orderId}]]";
+    let coffeeOrderId = "[[${orderId}]]";
+
+    let currentPage = 1;
+    let sortingField = 'id';
+    let sortingDirection = 'ASC';  // DESC
+
+    let totalPage;
+
+    $(document).ready(function() {
+        updatePage(currentPage, sortingField, sortingDirection);
+    });
+
+    function sort(field){
+        if(sortingDirection === 'ASC'){
+            sortingDirection = 'DESC';
+        } else {
+            sortingDirection = 'ASC';
+        }
+        sortingField = field;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+
+    function updatePage(currentPage, sortingField, sortingDirection){
+        let data = {
+            page: currentPage,
+            field: sortingField,
+            direction: sortingDirection,
+            orderId: orderId
+        }
+        $.ajax({
+            type: 'get',
+            url: '../getCoffeeOrders',
+            data: data,
+            dataType: "json",
+            success: function (data){
+                totalPage = data.totalPages;
+                updateList(data)
+                console.log('success /getCoffeeOrders');
+            },
+            error: function() {
+                console.log('error /getCoffeeOrders');
+            }
+        });
+    }
+
+    function updateList(data) {
+        $("#list").empty();
+        data.content.forEach((coffeeOrder) => {
+            let price = 0;
+            price += coffeeOrder.size?.price ?? 0;
+            price += coffeeOrder.alcohol?.price ?? 0;
+            price += coffeeOrder.syrup?.price ?? 0;
+            price += coffeeOrder.milk?.price ?? 0;
+            price += coffeeOrder.supplement?.price ?? 0;
+            price *= coffeeOrder.count;
+            let coffee = coffeeOrder.coffee?.name ?? "not selected";
+            let alcohol = coffeeOrder.alcohol?.name ?? "not selected";
+            let syrup = coffeeOrder.syrup?.name ?? "not selected";
+            let milk = coffeeOrder.milk?.name ?? "not selected";
+            let supplement = coffeeOrder.supplement?.name ?? "not selected";
+            let size = coffeeOrder.size?.name ?? "not selected";
+            $("#list").append($("" +
+                "<tr>" +
+                "<td>" +
+                "<p>" + coffeeOrder.id + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + coffee + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + alcohol + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + syrup + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + milk + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + supplement + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + size + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + coffeeOrder.count + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + price + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='deleteObject(" + coffeeOrder.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                "</td>" +
+                "</tr>"
+            ))
+        })
+        paginationButton();
+    }
+
+
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../deleteCoffeeOrderById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /deleteCoffeeOrderById');
+                updatePage(currentPage, sortingField, sortingDirection)
+            },
+            error: function() {
+                console.log('error /deleteCoffeeOrderById');
+            }
+        });
+    }
+
+    function paginationButton(){
+        $("#choose-page").empty();
+        if(totalPage > 1){
+            // $("#choose-page").append($("<ul class=\"pagination\">"));
+            if(currentPage !== 1){
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "</div>"
+                ));
+            }
+            let start = currentPage - 2;
+            let finish = currentPage + 2;
+            for(let i = start; i <= finish; i++) {
+                if(i > 0 && i <= totalPage) {
+                    $("#choose-page").append($("" +
+                        "<div class=\"col\">" +
+                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
+                        "</div>"
+                    ));
+                }
+            }
+            if(currentPage !== totalPage) {
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "</div>"
+                ));
+            }
+            // $("#choose-page").append($("</ul>"));
+        }
+    }
+
+    function goFirstPage(){
+        currentPage = 1;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+    function goPreviousPage(){
+        currentPage--;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goToPage(i){
+        currentPage = i;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goNextPage(){
+        currentPage++;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goLastPage(){
+        currentPage = totalPage;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+</script>
+
+</main>
+</body>
+</html>

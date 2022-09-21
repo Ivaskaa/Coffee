@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Education</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Education</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <button onclick="openPopup('add')" class="btn btn-success popup-with-form">Add</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th onclick="sort('id')" scope="col">Id</th>
+                    <th onclick="sort('title')" scope="col">Title</th>
+                    <th scope="col">Photo</th>
+                    <th onclick="sort('text')" scope="col">Text</th>
+                    <th scope="col">Active</th>
+                    <th scope="col">Edit</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+            <div id="choose-page" class="row" style="width: 40%;" >
+                <!-- pagination button -->
+            </div>
+        </section>
+    </div>
+    <div id="popup" class="modal">
+        <!-- popup -->
+    </div>
+</div>
+
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+    let modal = document.getElementById("popup");
+
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
+    let url =window.location.protocol+"//"+ window.location.host +context+"/img/education/";
+
+    let currentPage = 1;
+    let sortingField = 'id';
+    let sortingDirection = 'ASC';  // DESC
+
+    let totalPage;
+    let IdForUpdating;
+
+    $(document).ready(function() {
+        updatePage(currentPage, sortingField, sortingDirection);
+    });
+
+    function openPopup(style){
+        modal.style.display = "block";
+        $("#popup").append($(
+            "<div class=\"modal-content\">\n" +
+            "            <span onclick=\"closePopup()\" class=\"close\">&times;</span>\n" +
+            "            <form id=\"add-form\" class=\"mt-2\">\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Title:</label>\n" +
+            "                    <input id=\"title\" type=\"text\" maxlength=\"40\" name=\"title\"\n" +
+            "                           placeholder=\"Enter title\" class=\"form-control\">\n" +
+            "                </div>\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Photo:</label>\n" +
+            "                    <input onchange='showImage()' id=\"file\" type=\"file\" name=\"photo\" class=\"form-control\">\n" +
+            "                    <img  src=\"\" id=\"image\" style=\"height: 200px; display: none;\"/>\n" +
+            "                </div>\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Text:</label>\n" +
+            "                    <textarea id=\"text\" type=\"text\" maxlength=\"255\" name=\"text\"\n" +
+            "                              placeholder=\"Enter text\" class=\"form-control\"></textarea>\n" +
+            "                </div>\n" +
+            "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
+            "                    <label class=\"m-1\">Active:</label>\n" +
+            "                    <div class=\"form-check form-switch m-1\">\n" +
+            "                        <input id=\"active\" type=\"checkbox\" name=\"active\" class=\"form-check-input\" checked=\"checked\" role=\"switch\">\n" +
+            "                    </div>\n" +
+            "                </div>\n" +
+            "                <button onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>\n" +
+            "            </form>\n" +
+            "        </div>"
+        ));
+    }
+
+    function showImage() {
+        let image = document.getElementById("image");
+        let file = document.getElementById("file");
+        image.src = URL.createObjectURL(file.files[0]);
+        image.style.display = "block";
+    }
+
+    function closePopup(){
+        modal.style.display = "none";
+        $("#popup").empty();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+            $("#popup").empty();
+        }
+    }
+
+    function save(style){
+        let education = {
+            title: '',
+            text: '',
+            active: false
+        }
+        let formData = new FormData();
+        let educationTitle = document.getElementById('title');
+        if(validationInputTextEmpty(educationTitle)){
+            return false;
+        }
+        let educationText = document.getElementById('text');
+        if(validationInputTextEmpty(educationText)){
+            return false;
+        }
+        let photo = document.getElementById("file");
+        if(style === 'add') {
+            if (validationInputFileEmpty(photo)) {
+                return false;
+            }
+        }
+        let educationActive = document.getElementById('active');
+        education.title = educationTitle.value;
+        education.text = educationText.value;
+        education.active = educationActive.checked;
+        formData.append('education', JSON.stringify(education));
+        formData.append('file', photo.files[0]);
+        if(style === 'add') {
+            $.ajax({
+                type: 'post',
+                url: '../addEducation',
+                contentType: false,
+                processData: false,
+                data: formData,
+                dataType: "json",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /addEducation');
+                },
+                error: function () {
+                    console.log('error /addEducation');
+                }
+            });
+        }
+
+        if(style === 'edit') {
+            formData.append('id', IdForUpdating);
+            $.ajax({
+                type: 'post',
+                url: '../updateEducation',
+                contentType: false,
+                processData: false,
+                data: formData,
+                dataType: "json",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /updateEducation');
+                },
+                error: function () {
+                    console.log('error /updateEducation');
+                }
+            });
+        }
+    }
+
+    function sort(field){
+        if(sortingDirection === 'ASC'){
+            sortingDirection = 'DESC';
+        } else {
+            sortingDirection = 'ASC';
+        }
+        sortingField = field;
+        updatePage(currentPage, sortingField, sortingDirection);
+
+    }
+
+    function updatePage(currentPage, sortingField, sortingDirection){
+        let data = {
+            page: currentPage,
+            field: sortingField,
+            direction: sortingDirection
+        }
+        $.ajax({
+            type: 'get',
+            url: '../getEducations',
+            data: data,
+            dataType: "json",
+            success: function (data){
+                console.log(data);
+                totalPage = data.totalPages;
+                updateList(data)
+                console.log('success /getEducations');
+            },
+            error: function() {
+                console.log('error /getEducations');
+            }
+        });
+    }
+
+    function updateList(data) {
+        $("#list").empty();
+        data.content.forEach((education) => {
+            $("#list").append($("" +
+                "<tr>" +
+                "<td>" +
+                "<p>" + education.id + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + education.title + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<img style='height: 100px' src='" + url + education.photo + "'>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + education.text + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + education.active + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='editForm(" + education.id + ")' class=\"btn btn-warning\" type=\"button\">Edit</button>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='deleteObject(" + education.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                "</td>" +
+                "</tr>"
+            ));
+        })
+        paginationButton();
+    }
+
+    function editForm(id){
+        IdForUpdating = id;
+        openPopup('edit');
+        let data = { id: id };
+        $.ajax({
+            type: 'get',
+            url: '../getEducationById',
+            data: data,
+            dataType: "json",
+            success: function (education){
+                console.log('success /getEducationById');
+                let educationName = document.getElementById('title');
+                educationName.value = education.title;
+                let educationPrice = document.getElementById('text');
+                educationPrice.value = education.text;
+                let coffeeActive = document.getElementById('active');
+                coffeeActive.checked = education.active;
+            },
+            error: function() {
+                console.log('error /getEducationById');
+            }
+        });
+    }
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../deleteEducationById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /deleteEducationById');
+                updatePage(currentPage, sortingField, sortingDirection)
+            },
+            error: function() {
+                console.log('error /deleteEducationById');
+            }
+        });
+    }
+
+    function paginationButton(){
+        $("#choose-page").empty();
+        if(totalPage > 1){
+            // $("#choose-page").append($("<ul class=\"pagination\">"));
+            if(currentPage !== 1){
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "</div>"
+                ));
+            }
+            let start = currentPage - 2;
+            let finish = currentPage + 2;
+            for(let i = start; i <= finish; i++) {
+                if(i > 0 && i <= totalPage) {
+                    $("#choose-page").append($("" +
+                        "<div class=\"col\">" +
+                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
+                        "</div>"
+                    ));
+                }
+            }
+            if(currentPage !== totalPage) {
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "</div>"
+                ));
+            }
+            // $("#choose-page").append($("</ul>"));
+        }
+    }
+
+    function goFirstPage(){
+        currentPage = 1;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+
+    function goPreviousPage(){
+        currentPage--;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+
+    function goToPage(i){
+        currentPage = i;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goNextPage(){
+        currentPage++;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goLastPage(){
+        currentPage = totalPage;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+</script>
+
+</main>
+</body>
+</html>

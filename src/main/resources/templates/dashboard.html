@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="col-sm-6">
+                    <h1 class="m-0">Dashboard</h1>
+                </div><!-- /.col -->
+            </div>
+        </div>
+
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <!-- Small boxes (Stat box) -->
+                <div class="row">
+                    <div class="col-lg-3 col-6">
+                        <!-- small box -->
+                        <div class="small-box bg-info">
+                            <div class="inner">
+                                <h3 th:text="${countOrder}" ></h3>
+
+                                <p>Orders</p>
+                            </div>
+                            <div class="icon">
+                                <i class="ion ion-bag"></i>
+                            </div>
+                            <a th:href="@{/order}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <!-- ./col -->
+                    <div class="col-lg-3 col-6">
+                        <!-- small box -->
+                        <div class="small-box bg-success">
+                            <div class="inner">
+                                <h3 th:text="${countLocation}"></h3>
+
+                                <p>Locations</p>
+                            </div>
+                            <div class="icon">
+                                <i class="ion ion-stats-bars"></i>
+                            </div>
+                            <a th:href="@{/location}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <!-- ./col -->
+                    <div class="col-lg-3 col-6">
+                        <!-- small box -->
+                        <div class="small-box bg-danger">
+                            <div class="inner">
+                                <h3 th:text="${countFeedback}" ></h3>
+
+                                <p>Feedbacks</p>
+                            </div>
+                            <div class="icon">
+                                <i class="ion ion-pie-graph"></i>
+                            </div>
+                            <a th:href="@{/feedback}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <!-- small box -->
+                        <div class="small-box bg-warning">
+                            <div class="inner">
+                                <h3 th:text="${countUser}"></h3>
+
+                                <p>Users</p>
+                            </div>
+                            <div class="icon">
+                                <i class="ion ion-person-add"></i>
+                            </div>
+                            <a th:href="@{/user}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card card-success">
+                            <div class="card-header">
+                                <h3 class="card-title">Products vs Orders</h3>
+
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-tool" data-card-widget="remove">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                                    <canvas id="barChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%; display: block; width: 764px;" width="764" height="250" class="chartjs-render-monitor"></canvas>
+                                </div>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+                    </div>
+                    <!-- /.col -->
+
+                    <div class="col-md-6">
+                        <!-- Bar chart -->
+                        <div class="card card-danger">
+                            <div class="card-header">
+                                <h3 class="card-title">Ingredients</h3>
+                                <div class="card-tools">
+                                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-tool" data-card-widget="remove">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chartjs-size-monitor">
+                                    <div class="chartjs-size-monitor-expand">
+                                        <div class=""></div>
+                                    </div>
+                                    <div class="chartjs-size-monitor-shrink">
+                                        <div class=""></div>
+                                    </div>
+                                </div>
+                                <canvas id="donutChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%; display: block; width: 764px;" width="764" height="250" class="chartjs-render-monitor"></canvas>
+                            </div>
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+                    </div>
+                    <!-- /.col -->
+                </div>
+            </div><!-- /.container-fluid -->
+        </section>
+        <!-- /.content -->
+
+    </div>
+</div>
+
+<script>
+    let countAlcohol = "[[${countAlcohol}]]";
+    let countMilk = "[[${countMilk}]]";
+    let countSauce = "[[${countSauce}]]";
+    let countSupplement = "[[${countSupplement}]]";
+    let countSyrup = "[[${countSyrup}]]";
+
+    let countCoffee = "[[${countCoffee}]]";
+    let countTea = "[[${countTea}]]";
+    let countSandwich = "[[${countSandwich}]]";
+    let countSnack = "[[${countSnack}]]";
+    let countDessert = "[[${countDessert}]]";
+
+    let countCoffeeOrder = "[[${countCoffeeOrder}]]";
+    let countTeaOrder = "[[${countTeaOrder}]]";
+    let countSandwichOrder = "[[${countSandwichOrder}]]";
+    let countSnackOrder = "[[${countSnackOrder}]]";
+    let countDessertOrder = "[[${countDessertOrder}]]";
+
+    $(function () {
+        // console.log(countAlcohol);
+        // console.log(countMilk);
+        // console.log(countSauce);
+        // console.log(countSupplement);
+        // console.log(countSyrup);
+        //
+        // console.log(countCoffee);
+        // console.log(countTea);
+        // console.log(countSandwich);
+        // console.log(countSnack);
+        // console.log(countDessert);
+        //
+        // console.log(countCoffeeOrder);
+        // console.log(countTeaOrder);
+        // console.log(countSandwichOrder);
+        // console.log(countSnackOrder);
+        // console.log(countDessertOrder);
+
+        //-------------
+        //- DONUT CHART -
+        //-------------
+
+        //             backgroundColor : ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
+
+        function generateColor() {
+            return '#' + Math.floor(Math.random()*16777215).toString(16)
+        }
+
+        let donutData        = {
+            labels: [
+                'Alcohol',
+                'Milk',
+                'Sauce',
+                'Supplement',
+                'Syrup'],
+            datasets: [
+                {
+                    data: [countAlcohol, countMilk, countSauce, countSupplement, countSyrup],
+                    backgroundColor : ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
+                }
+            ]
+        }
+        let donutChartCanvas = $('#donutChart').get(0).getContext('2d')
+        let donutOptions     = {
+            maintainAspectRatio : false,
+            responsive : true,
+        }
+        new Chart(donutChartCanvas, {
+            type: 'doughnut',
+            data: donutData,
+            options: donutOptions
+        })
+
+        //-------------
+        //- BAR CHART -
+        //-------------
+
+        let areaChartData = {
+            labels  : ['Coffee', 'Tea', 'Sandwich', 'Snack', 'Dessert'],
+            datasets: [
+                {
+                    label               : 'Products',
+                    backgroundColor     : 'rgba(60,141,188,0.9)',
+                    borderColor         : 'rgba(60,141,188,0.8)',
+                    pointRadius          : false,
+                    pointColor          : '#3b8bba',
+                    pointStrokeColor    : 'rgba(60,141,188,1)',
+                    pointHighlightFill  : '#fff',
+                    pointHighlightStroke: 'rgba(60,141,188,1)',
+                    data                : [countCoffee, countTea, countSandwich, countSnack, countDessert]
+                },
+                {
+                    label               : 'Orders',
+                    backgroundColor     : 'rgba(210, 214, 222, 1)',
+                    borderColor         : 'rgba(210, 214, 222, 1)',
+                    pointRadius         : false,
+                    pointColor          : 'rgba(210, 214, 222, 1)',
+                    pointStrokeColor    : '#c1c7d1',
+                    pointHighlightFill  : '#fff',
+                    pointHighlightStroke: 'rgba(220,220,220,1)',
+                    data                : [countCoffeeOrder, countTeaOrder, countSandwichOrder, countSnackOrder, countDessertOrder]
+                },
+            ]
+        }
+        console.log(areaChartData);
+
+        let barChartCanvas = $('#barChart').get(0).getContext('2d')
+        let barChartData = $.extend(true, {}, areaChartData)
+        let temp0 = areaChartData.datasets[0]
+        barChartData.datasets[0] = temp0
+
+
+        let barChartOptions = {
+            responsive              : true,
+            maintainAspectRatio     : false,
+            datasetFill             : false
+        }
+        new Chart(barChartCanvas, {
+            type: 'bar',
+            data: barChartData,
+            options: barChartOptions
+        })
+    })
+</script>
+
+<div th:replace="blocks/scriptAdminLTE"></div>
+
+</body>
+</html>

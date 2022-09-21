@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tea Awards</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Tea Awards</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <button onclick="openPopup('add')" class="btn btn-success popup-with-form">Add</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th onclick="sort('id')" scope="col">Id</th>
+                    <th onclick="sort('tea')" scope="col">Tea</th>
+                    <th onclick="sort('size')" scope="col">Size</th>
+                    <th onclick="sort('syrup')" scope="col">Syrup</th>
+                    <th onclick="sort('milk')" scope="col">Milk</th>
+                    <th onclick="sort('supplement')" scope="col">Supplement</th>
+                    <th onclick="sort('count')" scope="col">Count</th>
+                    <th scope="col">Price</th>
+                    <th onclick="sort('active')" scope="col">Active</th>
+                    <th scope="col">Edit</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+
+            <div id="choose-page" class="row" style="width: 40%;" >
+                <!-- pagination button -->
+            </div>
+
+        </section>
+    </div>
+    <div id="popup" class="modal">
+        <!-- popup -->
+    </div>
+</div>
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+    let modal = document.getElementById("popup");
+    let orderId = "[[${orderId}]]";
+
+    let currentPage = 1;
+    let sortingField = 'id';
+    let sortingDirection = 'ASC';  // DESC
+
+    let Order = null;
+    let totalPage;
+
+    $(document).ready(function() {
+        updatePage(currentPage, sortingField, sortingDirection);
+    });
+
+    function sort(field){
+        if(sortingDirection === 'ASC'){
+            sortingDirection = 'DESC';
+        } else {
+            sortingDirection = 'ASC';
+        }
+        sortingField = field;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+
+    function updatePage(currentPage, sortingField, sortingDirection){
+        let data = {
+            page: currentPage,
+            field: sortingField,
+            direction: sortingDirection,
+            orderId: orderId
+        }
+        $.ajax({
+            type: 'get',
+            url: '../awards/getTeaOrders',
+            data: data,
+            dataType: "json",
+            success: function (data){
+                totalPage = data.totalPages;
+                updateList(data)
+                console.log('success /awards/getTeaOrders');
+            },
+            error: function() {
+                console.log('error /awards/getTeaOrders');
+            }
+        });
+    }
+
+    function updateList(data) {
+        $("#list").empty();
+        data.content.forEach((teaOrder) => {
+            let price = 0;
+            price += teaOrder.size?.price ?? 0;
+            price += teaOrder.syrup?.price ?? 0;
+            price += teaOrder.milk?.price ?? 0;
+            price += teaOrder.supplement?.price ?? 0;
+            price *= teaOrder.count;
+            let tea = teaOrder.tea?.name ?? "not selected";
+            let syrup = teaOrder.syrup?.name ?? "not selected";
+            let milk = teaOrder.milk?.name ?? "not selected";
+            let supplement = teaOrder.supplement?.name ?? "not selected";
+            let size = teaOrder.size?.name ?? "not selected";
+            $("#list").append($("" +
+                "<tr>" +
+                "<td>" +
+                "<p>" + teaOrder.id + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + tea + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + size + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + syrup + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + milk + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + supplement + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + teaOrder.count + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + price + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<p>" + teaOrder.active + "</p>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='getTeaOrderById(" + teaOrder.id + ")' class=\"btn btn-warning\" type=\"button\">Edit</button>" +
+                "</td>" +
+                "<td>" +
+                "<button onclick='deleteObject(" + teaOrder.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                "</td>" +
+                "</tr>"
+            ))
+        })
+        paginationButton();
+    }
+
+    function openPopup(style){
+        modal.style.display = "block";
+        $("#popup").append($(
+            "<div class=\"modal-content\">\n" +
+            "            <span onclick=\"closePopup()\" class=\"close\">&times;</span>\n" +
+            "            <form id=\"add-form\" class=\"mt-2\">\n" +
+            "\n" +
+            "                <div class='row'>\n" +
+            "                   <div class='col'>\n" +
+            "                       <div class=\"form-group mt-2\">\n" +
+            "                           <label>Tea:</label>\n" +
+            "                           <select onchange='updateSize()' id='tea' name='tea' class='form-control'>" +
+            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose tea</option>" +
+            "                           </select>" +
+            "                       </div>\n" +
+            "                   </div>\n" +
+            "                   <div class='col'>\n" +
+            "                       <div class=\"form-group mt-2\">\n" +
+            "                           <label>Size:</label>\n" +
+            "                           <select id='size' name='size' class='form-control'>" +
+            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>" +
+            "                           </select>" +
+            "                       </div>\n" +
+            "                   </div>\n" +
+            "               </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Syrup:</label>\n" +
+            "                    <select id='syrup' name='syrup' class='form-control'>" +
+            "                    </select>" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Milk:</label>\n" +
+            "                    <select id='milk' name='milk' class='form-control'>" +
+            "                    </select>" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                    <label>Supplement:</label>\n" +
+            "                    <select id='supplement' name='supplement' class='form-control'>" +
+            "                    </select>" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"form-group mt-2\">\n" +
+            "                     <label>Count:</label>\n" +
+            "                     <input id=\"count\" min='0' value='1' type='number' name=\"count\"\n" +
+            "                            placeholder=\"Enter count\" maxlength='5' class=\"form-control\">\n" +
+            "                </div>\n" +
+            "\n" +
+            "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
+            "                    <label class=\"m-1\">Active:</label>\n" +
+            "                    <div class=\"form-check form-switch m-1\">\n" +
+            "                        <input id=\"active\" type=\"checkbox\" name=\"active\" class=\"form-check-input\" checked=\"checked\" role=\"switch\">\n" +
+            "                    </div>\n" +
+            "                </div>\n" +
+            "\n" +
+            "                <button onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>\n" +
+            "            </form>\n" +
+            "        </div>"
+        ));
+        uploadSelect();
+    }
+
+    function save(style){
+        let teaOrder = {};
+        let selectTea = document.getElementById("tea");
+        let tea = ($('#tea')).find(":selected").data("value");
+        if (tea === null){
+            selectTea.style.borderColor = "red";
+            return false;
+        } else {
+            selectTea.style.borderColor = "#ced4da";
+        }
+
+        let selectSize = document.getElementById("size");
+        let size = ($('#size')).find(":selected").data("value");
+        if (size === null){
+            selectSize.style.borderColor = "red";
+            return false;
+        } else {
+            selectSize.style.borderColor = "#ced4da";
+        }
+
+        let syrup = ($('#syrup')).find(":selected").data("value");
+        let milk = ($('#milk')).find(":selected").data("value");
+        let supplement = ($('#supplement')).find(":selected").data("value");
+        let count = document.getElementById('count');
+        let active = document.getElementById('active');
+
+
+        teaOrder.tea = tea
+        teaOrder.size = size
+        teaOrder.syrup = syrup
+        teaOrder.milk = milk
+        teaOrder.supplement = supplement
+        teaOrder.count = parseInt(count.value)
+        teaOrder.active = active.checked
+
+        if(style === 'add') {
+            $.ajax({
+                type: 'post',
+                url: '../awards/addTeaOrder',
+                data: JSON.stringify(teaOrder),
+                contentType: "application/json; charset=utf-8",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /awards/addTeaOrder');
+                },
+                error: function () {
+                    console.log('error /awards/addTeaOrder');
+                }
+            });
+        }
+
+        if(style === 'edit') {
+            teaOrder.id = IdForUpdating;
+            $.ajax({
+                type: 'post',
+                url: '../awards/updateTeaOrder',
+                data: JSON.stringify(teaOrder),
+                contentType: "application/json; charset=utf-8",
+                success: function (success) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                    console.log(success + ' /awards/updateTeaOrder');
+                },
+                error: function () {
+                    console.log('error /awards/updateTeaOrder');
+                }
+            });
+        }
+    }
+
+    function getTeaOrderById(id){
+        let data = {id: id}
+        $.ajax({
+            type: 'get',
+            url: '../awards/getTeaOrderById',
+            data: data,
+            dataType: "json",
+            success: function (teaOrder){
+                console.log('success /awards/getOrderById');
+                Order = teaOrder;
+                IdForUpdating = Order.id;
+                Order.tea.sizes = null;
+                openPopup('edit');
+            },
+            error: function() {
+                console.log('error /awards/getTeaOrderById');
+            }
+        });
+    }
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../awards/deleteTeaOrderById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /awards/deleteTeaOrderById');
+                updatePage(currentPage, sortingField, sortingDirection)
+            },
+            error: function() {
+                console.log('error /awards/deleteTeaOrderById');
+            }
+        });
+    }
+
+    function closePopup(){
+        Order = null;
+        modal.style.display = "none";
+        $("#popup").empty();
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closePopup();
+        }
+    }
+
+    function uploadSelect(){
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveTeas',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveTeas');
+                data.forEach((tea) =>{
+                    tea.sizes = null;
+                    if(JSON.stringify(tea) === JSON.stringify(Order?.tea?? null)) {
+                        $("#tea").append($("" +
+                            "<option data-value='" + JSON.stringify(tea) + "' selected> " + tea.name + "</option>"
+                        ));
+                        updateSize()
+                        let count = document.getElementById("count");
+                        count.value = Order.count;
+                        let active = document.getElementById("active");
+                        active.checked = Order.active;
+                    } else {
+                        $("#tea").append($("" +
+                            "<option data-value='" + JSON.stringify(tea) + "'> " + tea.name + "</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveTeas');
+            }
+        });
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveSyrups',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveSyrups');
+                $("#syrup").append($("" +
+                    "<option data-value='" + JSON.stringify(null) + "'>Without syrup</option>"
+                ));
+                data.forEach((syrup) =>{
+                    if(JSON.stringify(syrup) === JSON.stringify(Order?.syrup?? null)) {
+                        $("#syrup").append($("" +
+                            "<option data-value='" + JSON.stringify(syrup) + "' selected> " + syrup.name + " ("+ syrup.price  + ")</option>"
+                        ));
+                    } else {
+                        $("#syrup").append($("" +
+                            "<option data-value='" + JSON.stringify(syrup) + "'> " + syrup.name + " ("+ syrup.price  + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveSyrups');
+            }
+        });
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveMilks',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveMilks');
+                $("#milk").append($("" +
+                    "<option data-value='" + JSON.stringify(null) + "'>Without milk</option>"
+                ));
+                data.forEach((milk) =>{
+                    if(JSON.stringify(milk) === JSON.stringify(Order?.milk?? null)) {
+                        $("#milk").append($("" +
+                            "<option data-value='" + JSON.stringify(milk) + "' selected> " + milk.name + " ("+ milk.price  + ")</option>"
+                        ));
+                    } else {
+                        $("#milk").append($("" +
+                            "<option data-value='" + JSON.stringify(milk) + "'> " + milk.name + " ("+ milk.price  + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveMilks');
+            }
+        });
+        $.ajax({
+            type: 'get',
+            url: '../getAllActiveSupplements',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getAllActiveSupplements');
+                $("#supplement").append($("" +
+                    "<option data-value='" + JSON.stringify(null) + "'>Without supplement</option>"
+                ));
+                data.forEach((supplement) =>{
+                    if(JSON.stringify(supplement) === JSON.stringify(Order?.supplement?? null)) {
+                        $("#supplement").append($("" +
+                            "<option data-value='" + JSON.stringify(supplement) + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                        ));
+                    } else {
+                        $("#supplement").append($("" +
+                            "<option data-value='" + JSON.stringify(supplement) + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getAllActiveSupplements');
+            }
+        });
+    }
+
+    function updateSize(){
+        let tea = ($('#tea')).find(":selected").data("value");
+        $.ajax({
+            type: 'get',
+            url: '../getTeaById',
+            data: {id: tea.id},
+            dataType: "json",
+            success: function (data){
+                console.log('success /getTeaById');
+                $("#size").empty();
+                $("#size").append($("<option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>"));
+                data.sizes.forEach((size) =>{
+                    if(JSON.stringify(size) === JSON.stringify(Order?.size?? null)){
+                        $("#size").append($("" +
+                            "<option data-value='" + JSON.stringify(size) + "' selected> " + size.name + " (" + size.price + ")</option>"
+                        ));
+                    } else {
+                        $("#size").append($("" +
+                            "<option data-value='" + JSON.stringify(size) + "'> " + size.name + " (" + size.price + ")</option>"
+                        ));
+                    }
+                })
+            },
+            error: function() {
+                console.log('error /getTeaById');
+            }
+        });
+    }
+
+    function paginationButton(){
+        $("#choose-page").empty();
+        if(totalPage > 1){
+            // $("#choose-page").append($("<ul class=\"pagination\">"));
+            if(currentPage !== 1){
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "</div>"
+                ));
+            }
+            let start = currentPage - 2;
+            let finish = currentPage + 2;
+            for(let i = start; i <= finish; i++) {
+                if(i > 0 && i <= totalPage) {
+                    $("#choose-page").append($("" +
+                        "<div class=\"col\">" +
+                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
+                        "</div>"
+                    ));
+                }
+            }
+            if(currentPage !== totalPage) {
+                $("#choose-page").append($("" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "</div>" +
+                    "<div class=\"col\">" +
+                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "</div>"
+                ));
+            }
+            // $("#choose-page").append($("</ul>"));
+        }
+    }
+
+    function goFirstPage(){
+        currentPage = 1;
+        updatePage(currentPage, sortingField, sortingDirection);
+    }
+    function goPreviousPage(){
+        currentPage--;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goToPage(i){
+        currentPage = i;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goNextPage(){
+        currentPage++;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+    function goLastPage(){
+        currentPage = totalPage;
+        updatePage(currentPage, sortingField, sortingDirection)
+    }
+</script>
+
+</main>
+</body>
+</html>

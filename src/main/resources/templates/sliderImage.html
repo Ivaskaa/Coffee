@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Slider image</title>
+
+    <style th:replace="blocks/linkAdminLTE"></style>
+    <div th:replace="blocks/links-bootstrap"></div>
+    <link rel="stylesheet" th:href="@{/css/popup.css}">
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <div th:replace="blocks/navbar"></div>
+    <div th:replace="blocks/sidebarContainer"></div>
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+
+        <div class="content-header">
+            <div class="container-fluid">
+                <h1 class="m-0">Slider image</h1>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="form-group mt-2">
+                <label>Add new Image:</label>
+                <input type="file" id="file" class="form-control">
+            </div>
+            <button onclick="save()" class="btn btn-success popup-with-form">Save</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">Id</th>
+                    <th scope="col">Image</th>
+                    <th scope="col">Delete</th>
+                </tr>
+                </thead>
+                <tbody id="list">
+                <!-- list -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div th:replace="blocks/scriptAdminLTE"></div>
+<script th:src="@{/js/validation.js}"></script>
+
+<script>
+
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
+    let url =window.location.protocol+"//"+ window.location.host +context+"/img/sliderImage/";
+
+    $(document).ready(function() {
+        updatePage();
+    });
+
+    function save(){
+        let file = document.getElementById('file');
+        if(validationInputFileEmpty(file)){
+            return false;
+        }
+        let formData = new FormData;
+        formData.append('file', file.files[0]);
+        $.ajax({
+            type: 'post',
+            url: '../addSliderImage',
+            contentType: false,
+            processData: false,
+            data: formData,
+            dataType: "json",
+            success: function (success) {
+                console.log(success + ' /addSliderImage');
+                updatePage();
+            },
+            error: function () {
+                console.log('error /addSliderImage');
+            }
+        });
+    }
+
+    function deleteObject(id){
+        let data = { id: id };
+        $.ajax({
+            type: 'post',
+            url: '../deleteSliderImageById',
+            data: data,
+            dataType: "json",
+            success: function (success){
+                console.log(success + ' /deleteSliderImageById');
+                updatePage()
+            },
+            error: function() {
+                console.log('error /deleteSliderImageById');
+            }
+        });
+    }
+
+    function updatePage(){
+        console.log('hello1');
+        $.ajax({
+            type: 'get',
+            url: '../getSliderImages',
+            dataType: "json",
+            success: function (data){
+                console.log('success /getSliderImages');
+                console.log('hello2');
+                console.log(data);
+                $("#list").empty();
+                data.forEach((image) =>{
+                    $("#list").append($("" +
+                        "<tr>" +
+                        "<td>" +
+                        "   <p>" + image.id + "</p>" +
+                        "</td>" +
+                        "<td>" +
+                        "   <img style='height: 100px' src='" + url + image.image + "'>" +
+                        "</td>" +
+                        "<td>" +
+                        "   <button onclick='deleteObject(" + image.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +
+                        "</td>" +
+                        "</tr>"
+                    ));
+                })
+            },
+            error: function() {
+                console.log('error /getSliderImages');
+            }
+        });
+    }
+
+</script>
+
+</main>
+</body>
+</html>
