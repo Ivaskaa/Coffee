@@ -41,7 +41,6 @@ public class AdminService implements UserDetailsService {
         admin.setPassword(passwordEncoder.encode(admin.getPassword()));
         admin.todayRegistrationDate();
         adminRepository.save(admin);
-        System.out.println(admin);
         log.info("success");
         return admin;
     }
