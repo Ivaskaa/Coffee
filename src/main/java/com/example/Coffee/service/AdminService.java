@@ -21,7 +21,6 @@ import java.util.Collections;
 
 @Service
 @Log4j2
-
 public class AdminService implements UserDetailsService {
     @Autowired
     private AdminRepository adminRepository;
