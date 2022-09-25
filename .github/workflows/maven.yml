@@ -10,10 +10,7 @@ jobs:
       mysql:
         image: mysql
         env:
-          MYSQL_DATABASE: coffee
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_USER: Ivaska
-          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: password
         volumes:
           - ./sql:/docker-entrypoint-initdb.d
         ports:
