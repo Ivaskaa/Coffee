@@ -10,6 +10,7 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
+          MYSQL_HOST: mysql
           MYSQL_DATABASE: coffee
           MYSQL_USER: Ivaska
           MYSQL_PASSWORD: password
@@ -19,5 +20,5 @@ jobs:
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - uses: actions/checkout@v1
-      - name: Build with Maven
+      - name: Build with Maven+
         run: mvn clean install
