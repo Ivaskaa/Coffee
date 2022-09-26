@@ -16,7 +16,7 @@ jobs:
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
-          mysql -e 'CREATE DATABASE coffee;' -u Ivaska -p password
+          mysql -e 'CREATE DATABASE coffee;' -u Ivaska -ppassword
 #name: Java CI with Maven
 #on: push
 #jobs:
