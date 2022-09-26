@@ -9,9 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      DB_DATABASE: test_db
-      DB_USER: root
-      DB_PASSWORD: root
+      DB_DATABASE: coffee
+      DB_USER: Ivaskaa
+      DB_PASSWORD: password
     steps:
       - name: Set up MySQL
         run: |
