@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DB_DATABASE: coffee
-      DB_USER: Ivaskaa
+      DB_USER: Ivaska
       DB_PASSWORD: password
     steps:
       - name: Set up MySQL
         run: |
           sudo /etc/init.d/mysql start
-          mysql -e 'CREATE DATABASE coffee;' -uIvaskaa -ppassword
+          mysql -e 'CREATE DATABASE coffee;' -u Ivaska -p password
 #name: Java CI with Maven
 #on: push
 #jobs:
