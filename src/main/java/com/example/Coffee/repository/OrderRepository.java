@@ -15,10 +15,10 @@ import java.util.List;
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
     Page<Order> findAll(Specification<Order> specification, Pageable pageable);
-    List<Order> findAll();
-
-    @Query("SELECT count(o) FROM Order o")
-    Integer findCount();
+//    List<Order> findAll();
+//
+//    @Query("SELECT count(o) FROM Order o")
+//    Integer findCount();
 
 //    Page<Order> findAll(Pageable pageable);
 //    @Query("select o from Order o where o.user.name like %?2% and o.id = ?1")

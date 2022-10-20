@@ -120,7 +120,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>coffee</finalName>        <!-- for tomcat -->
+		<finalName>coffee</finalName>        <!-- for war or jar -->
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

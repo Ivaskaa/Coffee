@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Getter
@@ -15,10 +17,11 @@ public class CoffeeSize {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Size(max = 255, message = "Name should be less than 255 characters")
+    @NotEmpty(message = "Must not be empty")
     private String name;
-    @Size(max = 255, message = "Description should be less than 255 characters")
+    @NotEmpty(message = "Must not be empty")
     private String description;
+    @NotNull(message = "Must not be empty")
     private Double price;
 
     @JoinColumn(name = "coffee_id")
