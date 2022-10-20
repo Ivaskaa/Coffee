@@ -16,68 +16,39 @@
 #          sudo /etc/init.d/mysql start
 #          mysql -e 'CREATE DATABASE coffee;' -u Ivaska -ppassword
 
-#name: Java CI with Maven
-#on: push
-#
-#jobs:
-#  build:
-#    runs-on: ubuntu-latest
-#        services:
-#          mysql:
-#            image: mysql:5.7
-#            env:
-#              MYSQL_HOST: mysql
-#              MYSQL_DATABASE: coffee
-#              MYSQL_USER: Ivaska
-#              MYSQL_PASSWORD: password
-#              MYSQL_ROOT_PASSWORD: root
-#            ports:
-#              - 33306:3306
-#            options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-#    steps:
-#      - uses: actions/checkout@v1
-#      - name: Build with Maven
-#        run: mvn clean install -DskipTests=true
-
-
 name: Java CI with Maven
-
-env:
-  APPLICATION_NAME: "MyFlask"
-  DEPLOY_PACKAGE_NAME: "flask-deploy-ver-${{ github.sha }}" # ${{ github.sha }} commit id
-
-
 on: push
 
 jobs:
-  my_testng:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Print Hello message
-        run: echo "Hello World testing"
-      - name: Execure few commands
-        run: |
-          echo "Hello message1"
-          echo "Hello message2"
-          echo "Application name: ${{ env.APPLICATION_NAME }}"
-#    services:
-#      mysql:
-#        image: mysql:5.7
-#        env:
-#          MYSQL_HOST: mysql
-#          MYSQL_DATABASE: coffee
-#          MYSQL_USER: Ivaska
-#          MYSQL_PASSWORD: password
-#          MYSQL_ROOT_PASSWORD: root
-#        ports:
-#          - 33306:3306
-#        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-  my_deploy:
-    runs-on: ubuntu-latest
-    needs: [my_testng]
-    steps:
-      - name: Print Hello message
-        run: echo "Hello World testing"
-#      - uses: actions/checkout@v1
-#      - name: Build with Maven
-#        run: mvn clean install -DskipTests=true
+      - uses: actions/checkout@v1
+      - name: Build with Maven
+        run: mvn clean install -DskipTests=true
+
+
+
+
+#name: Java CI with Maven
+#
+#env:
+#  APPLICATION_NAME: "MyFlask"
+#  DEPLOY_PACKAGE_NAME: "flask-deploy-ver-${{ github.sha }}" # ${{ github.sha }} commit id
+#
+#on: push
+#
+#jobs:
+#  my_testng:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Print Hello message
+#        run: echo "Hello World testing"
+#      - name: Git clone my repo
+#        uses: actions/checkout@v1
+#  my_deploy:
+#    runs-on: ubuntu-latest
+#    needs: [my_testng]
+#    steps:
+#      - name: Print Hello message
+#        run: echo "Hello World testing"
