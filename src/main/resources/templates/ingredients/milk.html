@@ -57,6 +57,10 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url: ' + url)
+    
     let modal = document.getElementById("popup");
 
     let currentPage = 1;
@@ -80,11 +84,13 @@
             "                    <label>Name:</label>\n" +
             "                    <input id=\"name\" type=\"text\" maxlength=\"255\" name=\"name\"\n" +
             "                           placeholder=\"Enter name\" class=\"form-control\">\n" +
+            "                    <p id='nameMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Price:</label>\n" +
             "                    <input id=\"price\" type=\"text\" maxlength=\"20\" name=\"price\"\n" +
             "                              placeholder=\"Enter price\" class=\"form-control\">\n" +
+            "                    <p id='priceMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
             "                    <label class=\"m-1\">Active:</label>\n" +
@@ -117,16 +123,7 @@
             active: false
         }
         let milkName = document.getElementById('name');
-        if(validationInputTextEmpty(milkName)){
-            return false;
-        }
         let milkPrice = document.getElementById('price');
-        if(validationInputTextEmpty(milkPrice)){
-            return false;
-        }
-        if(validationInputTextDouble(milkPrice)){
-            return false;
-        }
         let milkActive = document.getElementById('active');
         milk.name = milkName.value;
         milk.price = milkPrice.value;
@@ -136,13 +133,18 @@
         if(style === 'add') {
             $.ajax({
                 type: 'post',
-                url: '../addMilk',
-                data: milk,
-                dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /addMilk');
+                url: url + '/addMilk',
+                data: JSON.stringify(milk),
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    console.log('success /addMilk');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /addMilk');
@@ -154,18 +156,40 @@
             milk.id = IdForUpdating;
             $.ajax({
                 type: 'post',
-                url: '../updateMilk',
-                data: milk,
-                dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /updateMilk');
+                url: url + '/updateMilk',
+                data: JSON.stringify(milk),
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    console.log('success /updateMilk');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /updateMilk');
                 }
             });
+        }
+    }
+
+    function validationMessage(validation){
+        if(validation?.name ?? false){
+            document.getElementById('nameMessage').innerHTML = validation.name;
+            document.getElementById('name').style.border = "1px solid red";
+        }else {
+            document.getElementById('nameMessage').innerHTML = "";
+            document.getElementById('name').style.border = "1px solid green";
+        }
+        if(validation?.price ?? false){
+            document.getElementById('priceMessage').innerHTML = validation.price;
+            document.getElementById('price').style.border = "1px solid red";
+        }else {
+            document.getElementById('priceMessage').innerHTML = "";
+            document.getElementById('price').style.border = "1px solid green";
         }
     }
 
@@ -188,7 +212,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getMilks',
+            url: url + '/getMilks',
             data: data,
             dataType: "json",
             success: function (data){
@@ -237,7 +261,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getMilkById',
+            url: url + '/getMilkById',
             data: data,
             dataType: "json",
             success: function (milk){
@@ -259,7 +283,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteMilkById',
+            url: url + '/deleteMilkById',
             data: data,
             dataType: "json",
             success: function (success){

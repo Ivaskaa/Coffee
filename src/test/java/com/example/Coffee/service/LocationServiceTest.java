@@ -40,8 +40,8 @@ class LocationServiceTest {
     @Test
     void save() {
         Location location = new Location();
-        location.setLatitude("10");
-        location.setLongitude("10");
+        location.setLatitude(10d);
+        location.setLongitude(10d);
         location.setName("name");
         location.setActive(true);
         Location checkedLocation = locationService.save(location);
@@ -52,8 +52,8 @@ class LocationServiceTest {
     @Test
     void update() {
         Location location = new Location();
-        location.setLatitude("10");
-        location.setLongitude("10");
+        location.setLatitude(10d);
+        location.setLongitude(10d);
         location.setName("name");
         location.setActive(true);
 

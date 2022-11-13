@@ -56,6 +56,10 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url: ' + url)
+    
     let modal = document.getElementById("popup");
 
     let currentPage = 1;
@@ -80,6 +84,7 @@
             "                    <label>Name:</label>\n" +
             "                    <input id=\"name\" type=\"text\" maxlength=\"255\" name=\"name\"\n" +
             "                           placeholder=\"Enter name\" class=\"form-control\">\n" +
+            "                    <p id='nameMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
@@ -108,22 +113,24 @@
     function save(style){
         let city = {}
         let name = document.getElementById('name');
-        if(validationInputTextEmpty(name)){
-            return false;
-        }
         let cityActive = document.getElementById('active');
         city.name = name.value;
         city.active = cityActive.checked;
         if(style === 'add') {
             $.ajax({
                 type: 'post',
-                url: '../addCity',
-                data: city,
-                dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /addCity');
+                url: url + '/addCity',
+                data: JSON.stringify(city),
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    console.log('success /addCity');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /addCity');
@@ -132,21 +139,35 @@
         }
         if(style === 'edit') {
             city.id = IdForUpdating;
-            console.log(city);
             $.ajax({
                 type: 'post',
-                url: '../updateCity',
-                data: city,
-                dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /updateCity');
+                url: url + '/updateCity',
+                data: JSON.stringify(city),
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    console.log('success /updateCity');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /updateCity');
                 }
             });
+        }
+    }
+
+    function validationMessage(validation){
+        if(validation?.name ?? false){
+            document.getElementById('nameMessage').innerHTML = validation.name;
+            document.getElementById('name').style.border = "1px solid red";
+        }else {
+            document.getElementById('nameMessage').innerHTML = "";
+            document.getElementById('name').style.border = "1px solid green";
         }
     }
 
@@ -168,7 +189,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getCities',
+            url: url + '/getCities',
             data: data,
             dataType: "json",
             success: function (data){
@@ -216,7 +237,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getCityById',
+            url: url + '/getCityById',
             data: data,
             dataType: "json",
             success: function (city){
@@ -236,7 +257,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteCityById',
+            url: url + '/deleteCityById',
             data: data,
             dataType: "json",
             success: function (success){

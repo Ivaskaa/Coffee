@@ -65,6 +65,9 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    
     let modal = document.getElementById("popup");
     let orderId = "[[${orderId}]]";
 
@@ -98,16 +101,16 @@
         }
         $.ajax({
             type: 'get',
-            url: '../awards/getCoffeeOrders',
+            url: url + '/awards/getCoffeeOrders',
             data: data,
             dataType: "json",
             success: function (data){
                 totalPage = data.totalPages;
                 updateList(data)
-                console.log('success /awards/getCoffeeOrders');
+                console.log('success /getCoffeeOrders');
             },
             error: function() {
-                console.log('error /awards/getCoffeeOrders');
+                console.log('error /getCoffeeOrders');
             }
         });
     }
@@ -184,16 +187,18 @@
             "                       <div class=\"form-group mt-2\">\n" +
             "                           <label>Coffee:</label>\n" +
             "                           <select onchange='updateSize()' id='coffee' name='coffee' class='form-control'>" +
-            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose coffee</option>" +
+            "                               <option value='" + null + "' disabled selected>Choose coffee</option>" +
             "                           </select>" +
+            "                           <p id='coffeeMessage' style=\"color: red\"></p>" +
             "                       </div>\n" +
             "                   </div>\n" +
             "                   <div class='col'>\n" +
             "                       <div class=\"form-group mt-2\">\n" +
             "                           <label>Size:</label>\n" +
             "                           <select id='size' name='size' class='form-control'>" +
-            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>" +
+            "                               <option value='" + null + "' disabled selected>Choose size</option>" +
             "                           </select>" +
+            "                           <p id='sizeMessage' style=\"color: red\"></p>" +
             "                       </div>\n" +
             "                   </div>\n" +
             "               </div>\n" +
@@ -226,6 +231,7 @@
             "                     <label>Count:</label>\n" +
             "                     <input id=\"count\" min='0' value='1' type='number' name=\"count\"\n" +
             "                            placeholder=\"Enter count\" maxlength='5' class=\"form-control\">\n" +
+            "                    <p id='countMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
@@ -244,54 +250,37 @@
 
     function save(style){
         let coffeeOrder = {};
-        let selectCoffee = document.getElementById("coffee");
-        let coffee = ($('#coffee')).find(":selected").data("value");
-        if (coffee === null){
-            selectCoffee.style.borderColor = "red";
-            return false;
-        } else {
-            selectCoffee.style.borderColor = "#ced4da";
-        }
 
-        let selectSize = document.getElementById("size");
-        let size = ($('#size')).find(":selected").data("value");
-        if (size === null){
-            selectSize.style.borderColor = "red";
-            return false;
-        } else {
-            selectSize.style.borderColor = "#ced4da";
-        }
-
-        let alcohol = ($('#alcohol')).find(":selected").data("value");
-        let syrup = ($('#syrup')).find(":selected").data("value");
-        let milk = ($('#milk')).find(":selected").data("value");
-        let supplement = ($('#supplement')).find(":selected").data("value");
         let count = document.getElementById('count');
         let active = document.getElementById('active');
 
-
-        coffeeOrder.coffee = coffee
-        coffeeOrder.size = size
-        coffeeOrder.alcohol = alcohol
-        coffeeOrder.syrup = syrup
-        coffeeOrder.milk = milk
-        coffeeOrder.supplement = supplement
+        coffeeOrder.coffeeId = $('#coffee').val();
+        coffeeOrder.sizeId = $('#size').val()
+        coffeeOrder.alcoholId = $('#alcohol').val()
+        coffeeOrder.syrupId = $('#syrup').val()
+        coffeeOrder.milkId = $('#milk').val()
+        coffeeOrder.supplementId = $('#supplement').val()
         coffeeOrder.count = parseInt(count.value)
         coffeeOrder.active = active.checked
 
         if(style === 'add') {
             $.ajax({
                 type: 'post',
-                url: '../awards/addCoffeeOrder',
+                url: url + '/awards/addCoffeeOrder',
                 data: JSON.stringify(coffeeOrder),
                 contentType: "application/json; charset=utf-8",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /awards/addCoffeeOrder');
+                success: function (data) {
+                    console.log('success /addCoffeeOrder');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
-                    console.log('error /awards/addCoffeeOrder');
+                    console.log('error /addCoffeeOrder');
                 }
             });
         }
@@ -300,18 +289,47 @@
             coffeeOrder.id = IdForUpdating;
             $.ajax({
                 type: 'post',
-                url: '../awards/updateCoffeeOrder',
+                url: url + '/awards/updateCoffeeOrder',
                 data: JSON.stringify(coffeeOrder),
                 contentType: "application/json; charset=utf-8",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /awards/updateCoffeeOrder');
+                success: function (data) {
+                    console.log('success /updateCoffeeOrder');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
-                    console.log('error /awards/updateCoffeeOrder');
+                    console.log('error /updateCoffeeOrder');
                 }
             });
+        }
+    }
+
+    function validationMessage(validation){
+        if(validation?.coffeeId ?? false){
+            document.getElementById('coffeeMessage').innerHTML = validation.coffeeId;
+            document.getElementById('coffee').style.border = "1px solid red";
+        }else {
+            document.getElementById('coffeeMessage').innerHTML = "";
+            document.getElementById('coffee').style.border = "1px solid green";
+        }
+        if(validation?.sizeId ?? false){
+            document.getElementById('sizeMessage').innerHTML = validation.sizeId;
+            document.getElementById('size').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeMessage').innerHTML = "";
+            document.getElementById('size').style.border = "1px solid green";
+        }
+        if(validation?.count ?? false){
+            document.getElementById('countMessage').innerHTML = validation.count;
+            document.getElementById('count').style.border = "1px solid red";
+        }else {
+            document.getElementById('countMessage').innerHTML = "";
+            document.getElementById('count').style.border = "1px solid green";
         }
     }
 
@@ -319,18 +337,18 @@
         let data = {id: id}
         $.ajax({
             type: 'get',
-            url: '../awards/getCoffeeOrderById',
+            url: url + '/awards/getCoffeeOrderById',
             data: data,
             dataType: "json",
             success: function (coffeeOrder){
-                console.log('success /awards/getOrderById');
+                console.log('success /getCoffeeOrderById');
                 Order = coffeeOrder;
                 IdForUpdating = Order.id;
                 Order.coffee.sizes = null;
                 openPopup('edit');
             },
             error: function() {
-                console.log('error /awards/getCoffeeOrderById');
+                console.log('error /getCoffeeOrderById');
             }
         });
     }
@@ -339,15 +357,15 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../awards/deleteCoffeeOrderById',
+            url: url + '/awards/deleteCoffeeOrderById',
             data: data,
             dataType: "json",
             success: function (success){
-                console.log(success + ' /awards/deleteCoffeeOrderById');
+                console.log(success + ' /deleteCoffeeOrderById');
                 updatePage(currentPage, sortingField, sortingDirection)
             },
             error: function() {
-                console.log('error /awards/deleteCoffeeOrderById');
+                console.log('error /deleteCoffeeOrderById');
             }
         });
     }
@@ -365,9 +383,10 @@
     }
 
     function uploadSelect(){
+        console.log(url + '/getAllActiveCoffees');
         $.ajax({
             type: 'get',
-            url: '../getAllActiveCoffees',
+            url: url + '/getAllActiveCoffees',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveCoffees');
@@ -375,7 +394,7 @@
                     coffee.sizes = null;
                     if(JSON.stringify(coffee) === JSON.stringify(Order?.coffee?? null)) {
                         $("#coffee").append($("" +
-                            "<option data-value='" + JSON.stringify(coffee) + "' selected> " + coffee.name + "</option>"
+                            "<option value='" + coffee.id + "' selected> " + coffee.name + "</option>"
                         ));
                         updateSize()
                         let count = document.getElementById("count");
@@ -384,7 +403,7 @@
                         active.checked = Order.active;
                     } else {
                         $("#coffee").append($("" +
-                            "<option data-value='" + JSON.stringify(coffee) + "'> " + coffee.name + "</option>"
+                            "<option value='" + coffee.id + "'> " + coffee.name + "</option>"
                         ));
                     }
                     // "<option value='" + coffee + "'> " + coffee.name + " " + coffee.sizes.forEach((size) => {size.name}) + "</option>"
@@ -396,21 +415,21 @@
         });
         $.ajax({
             type: 'get',
-            url: '../getAllActiveAlcohols',
+            url: url + '/getAllActiveAlcohols',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveAlcohols');
                 $("#alcohol").append($("" +
-                    "<option data-value='" + JSON.stringify(null) + "'>Without alcohol</option>"
+                    "<option value='" + null + "'>Without alcohol</option>"
                 ));
                 data.forEach((alcohol) =>{
                     if(JSON.stringify(alcohol) === JSON.stringify(Order?.alcohol?? null)) {
                         $("#alcohol").append($("" +
-                            "<option data-value='" + JSON.stringify(alcohol) + "' selected> " + alcohol.name + " ("+ alcohol.price  + ")</option>"
+                            "<option value='" + alcohol.id + "' selected> " + alcohol.name + " ("+ alcohol.price  + ")</option>"
                         ));
                     } else {
                         $("#alcohol").append($("" +
-                            "<option data-value='" + JSON.stringify(alcohol) + "'> " + alcohol.name + " ("+ alcohol.price  + ")</option>"
+                            "<option value='" + alcohol.id + "'> " + alcohol.name + " ("+ alcohol.price  + ")</option>"
                         ));
                     }
                 })
@@ -421,21 +440,21 @@
         });
         $.ajax({
             type: 'get',
-            url: '../getAllActiveSyrups',
+            url: url + '/getAllActiveSyrups',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveSyrups');
                 $("#syrup").append($("" +
-                    "<option data-value='" + JSON.stringify(null) + "'>Without syrup</option>"
+                    "<option value='" + null + "'>Without syrup</option>"
                 ));
                 data.forEach((syrup) =>{
                     if(JSON.stringify(syrup) === JSON.stringify(Order?.syrup?? null)) {
                         $("#syrup").append($("" +
-                            "<option data-value='" + JSON.stringify(syrup) + "' selected> " + syrup.name + " ("+ syrup.price  + ")</option>"
+                            "<option value='" + syrup.id + "' selected> " + syrup.name + " ("+ syrup.price  + ")</option>"
                         ));
                     } else {
                         $("#syrup").append($("" +
-                            "<option data-value='" + JSON.stringify(syrup) + "'> " + syrup.name + " ("+ syrup.price  + ")</option>"
+                            "<option value='" + syrup.id + "'> " + syrup.name + " ("+ syrup.price  + ")</option>"
                         ));
                     }
                 })
@@ -446,21 +465,21 @@
         });
         $.ajax({
             type: 'get',
-            url: '../getAllActiveMilks',
+            url: url + '/getAllActiveMilks',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveMilks');
                 $("#milk").append($("" +
-                    "<option data-value='" + JSON.stringify(null) + "'>Without milk</option>"
+                    "<option value='" + null + "'>Without milk</option>"
                 ));
                 data.forEach((milk) =>{
                     if(JSON.stringify(milk) === JSON.stringify(Order?.milk?? null)) {
                         $("#milk").append($("" +
-                            "<option data-value='" + JSON.stringify(milk) + "' selected> " + milk.name + " ("+ milk.price  + ")</option>"
+                            "<option value='" + milk.id + "' selected> " + milk.name + " ("+ milk.price  + ")</option>"
                         ));
                     } else {
                         $("#milk").append($("" +
-                            "<option data-value='" + JSON.stringify(milk) + "'> " + milk.name + " ("+ milk.price  + ")</option>"
+                            "<option value='" + milk.id + "'> " + milk.name + " ("+ milk.price  + ")</option>"
                         ));
                     }
                 })
@@ -471,21 +490,21 @@
         });
         $.ajax({
             type: 'get',
-            url: '../getAllActiveSupplements',
+            url: url + '/getAllActiveSupplements',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveSupplements');
                 $("#supplement").append($("" +
-                    "<option data-value='" + JSON.stringify(null) + "'>Without supplement</option>"
+                    "<option value='" + null + "'>Without supplement</option>"
                 ));
                 data.forEach((supplement) =>{
                     if(JSON.stringify(supplement) === JSON.stringify(Order?.supplement?? null)) {
                         $("#supplement").append($("" +
-                            "<option data-value='" + JSON.stringify(supplement) + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                            "<option value='" + supplement.id + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
                         ));
                     } else {
                         $("#supplement").append($("" +
-                            "<option data-value='" + JSON.stringify(supplement) + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                            "<option value='" + supplement.id + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
                         ));
                     }
                 })
@@ -497,24 +516,24 @@
     }
 
     function updateSize(){
-        let coffee = ($('#coffee')).find(":selected").data("value");
+        let coffeeId = $('#coffee').val();
         $.ajax({
             type: 'get',
-            url: '../getCoffeeById',
-            data: {id: coffee.id},
+            url: url + '/getCoffeeById',
+            data: {id: coffeeId},
             dataType: "json",
             success: function (data){
                 console.log('success /getCoffeeById');
                 $("#size").empty();
-                $("#size").append($("<option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>"));
+                $("#size").append($("<option value='" + null + "' disabled selected>Choose size</option>"));
                 data.sizes.forEach((size) =>{
                     if(JSON.stringify(size) === JSON.stringify(Order?.size?? null)){
                         $("#size").append($("" +
-                            "<option data-value='" + JSON.stringify(size) + "' selected> " + size.name + " (" + size.price + ")</option>"
+                            "<option value='" + size.id + "' selected> " + size.name + " (" + size.price + ")</option>"
                         ));
                     } else {
                         $("#size").append($("" +
-                            "<option data-value='" + JSON.stringify(size) + "'> " + size.name + " (" + size.price + ")</option>"
+                            "<option value='" + size.id + "'> " + size.name + " (" + size.price + ")</option>"
                         ));
                     }
                 })

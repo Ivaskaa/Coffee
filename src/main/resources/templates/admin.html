@@ -56,6 +56,10 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+  let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+  let url = window.location.protocol+"//"+ window.location.host + context;
+  console.log('url: ' + url)
+  
   let modal = document.getElementById("popup");
 
   let currentPage = 1;
@@ -80,12 +84,14 @@
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Username:</label>\n" +
             "                    <input id=\"username\" type=\"text\" maxlength=\"30\" name=\"username\"\n" +
-            "                           placeholder=\"Enter username\" class=\"form-control\">\n" +
+            "                           placeholder=\"Enter username\" class=\"form-control\">" +
+            "                    <p id='usernameMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Password:</label>\n" +
             "                    <input id=\"password\" type=\"text\" maxlength=\"30\" name=\"password\"\n" +
             "                           placeholder=\"Enter password\" class=\"form-control\">\n" +
+            "                    <p id='passwordMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
             "                    <label class=\"m-1\">Active:</label>\n" +
@@ -117,39 +123,26 @@
       active: false
     }
     let adminName = document.getElementById('username');
-    if(validationInputTextEmpty(adminName)){
-      return false;
-    }
     let adminPassword = document.getElementById('password');
-    if(style === 'add') {
-      if(validationInputCheckUniqueUsername(adminName)){
-        return false;
-      }
-      if (validationInputTextEmpty(adminPassword)) {
-        return false;
-      }
-    }
-    if(style === 'edit') {
-      if(Admin.username !== adminName.value){
-        if(validationInputCheckUniqueUsername(adminName)){
-          return false;
-        }
-      }
-    }
     let adminActive = document.getElementById('active');
     admin.username = adminName.value;
     admin.active = adminActive.checked;
+    admin.password = adminPassword.value;
     if(style === 'add') {
-      admin.password = adminPassword.value;
       $.ajax({
         type: 'post',
-        url: '../addAdmin',
-        data: admin,
-        dataType: "json",
-        success: function (success) {
-          updatePage(currentPage, sortingField, sortingDirection)
-          closePopup();
-          console.log(success + ' /addAdmin');
+        url: url + '/addAdmin',
+        data: JSON.stringify(admin),
+        contentType: "application/json; charset=utf-8",
+        success: function (data) {
+          console.log('success /addAdmin');
+          let validation = JSON.parse(data);
+          if (validation == null) {
+            updatePage(currentPage, sortingField, sortingDirection)
+            closePopup();
+          } else {
+            validationMessage(validation);
+          }
         },
         error: function () {
           console.log('error /addAdmin');
@@ -158,21 +151,21 @@
     }
 
     if(style === 'edit') {
-      console.log(adminPassword.value);
-      if(adminPassword.value !== "") {
-        console.log(adminPassword.value);
-        admin.password = adminPassword.value;
-      }
       admin.id = IdForUpdating;
       $.ajax({
         type: 'post',
-        url: '../updateAdmin',
-        data: admin,
-        dataType: "json",
-        success: function (success) {
-          updatePage(currentPage, sortingField, sortingDirection)
-          closePopup();
-          console.log(success + ' /updateAdmin');
+        url: url + '/updateAdmin',
+        data: JSON.stringify(admin),
+        contentType: "application/json; charset=utf-8",
+        success: function (data) {
+          console.log('success /addAdmin');
+          let validation = JSON.parse(data);
+          if (validation == null) {
+            updatePage(currentPage, sortingField, sortingDirection)
+            closePopup();
+          } else {
+            validationMessage(validation);
+          }
         },
         error: function () {
           console.log('error /updateAdmin');
@@ -180,6 +173,24 @@
       });
     }
   }
+
+  function validationMessage(validation){
+    if(validation?.username ?? false){
+      document.getElementById('usernameMessage').innerHTML = validation.username;
+      document.getElementById('username').style.border = "1px solid red";
+    }else {
+      document.getElementById('usernameMessage').innerHTML = "";
+      document.getElementById('username').style.border = "1px solid green";
+    }
+    if(validation?.password ?? false){
+      document.getElementById('passwordMessage').innerHTML = validation.password;
+      document.getElementById('password').style.border = "1px solid red";
+    }else {
+      document.getElementById('passwordMessage').innerHTML = "";
+      document.getElementById('password').style.border = "1px solid green";
+    }
+  }
+
 
   function sort(field){
     if(sortingDirection === 'ASC'){
@@ -199,7 +210,7 @@
     }
     $.ajax({
       type: 'get',
-      url: '../getAdmins',
+      url: url + '/getAdmins',
       data: data,
       dataType: "json",
       success: function (data){
@@ -248,7 +259,7 @@
     let data = { id: id };
     $.ajax({
       type: 'get',
-      url: '../getAdminById',
+      url: url + '/getAdminById',
       data: data,
       dataType: "json",
       success: function (admin){
@@ -269,7 +280,7 @@
     let data = { id: id };
     $.ajax({
       type: 'post',
-      url: '../deleteAdminById',
+      url: url + '/deleteAdminById',
       data: data,
       dataType: "json",
       success: function (success){

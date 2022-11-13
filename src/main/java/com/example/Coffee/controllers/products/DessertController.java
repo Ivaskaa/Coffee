@@ -1,6 +1,7 @@
 package com.example.Coffee.controllers.products;
 
 import com.example.Coffee.entities.Admin;
+import com.example.Coffee.entities.product.coffee.CoffeeDto;
 import com.example.Coffee.entities.product.dessert.Dessert;
 import com.example.Coffee.entities.product.dessert.DessertDto;
 import com.example.Coffee.service.product.DessertService;
@@ -10,14 +11,16 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -53,24 +56,41 @@ public class DessertController {
     @PostMapping("/addDessert")
     @ResponseBody
     public String addDessert(
-            @RequestParam("dessert") String dessertJsonString,
-            MultipartFile file
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart("dessert") @Valid DessertDto dessertDto,
+            BindingResult bindingResult
     ) throws IOException {
-        DessertDto dessertDto = mapper.readValue(dessertJsonString, DessertDto.class);
+        //validation
+        if (file == null || file.isEmpty()){
+            bindingResult.addError(new FieldError("dessertDto", "photo", "Must not be empty"));
+        }
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
         dessertService.save(dessertDto.build(), file);
-        return mapper.writeValueAsString("success");
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/updateDessert")
     @ResponseBody
     public String updateDessert(
-            @RequestParam("dessert") String dessertJsonString,
-            MultipartFile file,
-            Long id
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart("dessert") @Valid DessertDto dessertDto,
+            BindingResult bindingResult
     ) throws IOException {
-        DessertDto dessertDto = mapper.readValue(dessertJsonString, DessertDto.class);
-        dessertService.update(id, dessertDto.build(), file);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        dessertService.update(dessertDto.getId(), dessertDto.build(), file);
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteDessertById")

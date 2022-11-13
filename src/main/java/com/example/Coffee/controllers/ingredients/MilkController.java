@@ -1,7 +1,9 @@
 package com.example.Coffee.controllers.ingredients;
 
 import com.example.Coffee.entities.Admin;
+import com.example.Coffee.entities.ingredients.alcohol.AlcoholDto;
 import com.example.Coffee.entities.ingredients.milk.Milk;
+import com.example.Coffee.entities.ingredients.milk.MilkDto;
 import com.example.Coffee.service.ingredient.MilkService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,11 +11,17 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.validation.Valid;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -50,19 +58,35 @@ public class MilkController {
     @PostMapping("/addMilk")
     @ResponseBody
     public String addMilk(
-            Milk milk
+            @RequestBody @Valid MilkDto milkDto,
+            BindingResult bindingResult
     ) throws IOException {
-        milkService.save(milk);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        milkService.save(milkDto.build());
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/updateMilk")
     @ResponseBody
     public String updateMilk(
-            Milk milk
+            @RequestBody @Valid MilkDto milkDto,
+            BindingResult bindingResult
     ) throws IOException {
-        milkService.update(milk.getId(), milk);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        milkService.update(milkDto.getId(), milkDto.build());
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteMilkById")

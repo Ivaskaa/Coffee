@@ -57,6 +57,10 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url: ' + url)
+    
     let modal = document.getElementById("popup");
 
     let currentPage = 1;
@@ -80,16 +84,19 @@
             "                    <label>Name:</label>\n" +
             "                    <input id=\"name\" type=\"text\" maxlength=\"40\" name=\"name\"\n" +
             "                           placeholder=\"Enter name\" class=\"form-control\">\n" +
+            "                    <p id='nameMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Phone:</label>\n" +
             "                    <input id=\"phone\" type=\"text\" maxlength=\"10\" name=\"phone\"\n" +
             "                           placeholder=\"Enter phone\" class=\"form-control\">\n" +
+            "                    <p id='phoneMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Email:</label>\n" +
             "                    <input id=\"email\" type=\"text\" maxlength=\"100\" name=\"email\"\n" +
             "                           placeholder=\"Enter email\" class=\"form-control\">\n" +
+            "                    <p id='emailMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                   <label>Status:</label>\n" +
@@ -122,17 +129,8 @@
     function save(){
         let feedback = {};
         let name = document.getElementById('name');
-        if(validationInputTextEmpty(name)){
-            return false;
-        }
         let phone = document.getElementById('phone');
-        if(validationInputTextEmpty(phone)){
-            return false;
-        }
         let email = document.getElementById('email');
-        if(validationInputTextEmpty(email)){
-            return false;
-        }
         let reviewed = document.getElementById('reviewed');
 
         feedback.name = name.value;
@@ -146,18 +144,47 @@
         feedback.id = IdForUpdating;
         $.ajax({
             type: 'post',
-            url: '../updateFeedback',
-            data: feedback,
-            dataType: "json",
-            success: function (success) {
-                updatePage(currentPage, sortingField, sortingDirection)
-                closePopup();
-                console.log(success + ' /updateFeedback');
+            url: url + '/updateFeedback',
+            data: JSON.stringify(feedback),
+            contentType: "application/json; charset=utf-8",
+            success: function (data) {
+                console.log('success /updateFeedback');
+                let validation = JSON.parse(data);
+                if (validation == null) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                } else {
+                    validationMessage(validation);
+                }
             },
             error: function () {
                 console.log('error /updateFeedback');
             }
         });
+    }
+
+    function validationMessage(validation){
+        if(validation?.name ?? false){
+            document.getElementById('nameMessage').innerHTML = validation.name;
+            document.getElementById('name').style.border = "1px solid red";
+        }else {
+            document.getElementById('nameMessage').innerHTML = "";
+            document.getElementById('name').style.border = "1px solid green";
+        }
+        if(validation?.phone ?? false){
+            document.getElementById('phoneMessage').innerHTML = validation.phone;
+            document.getElementById('phone').style.border = "1px solid red";
+        }else {
+            document.getElementById('phoneMessage').innerHTML = "";
+            document.getElementById('phone').style.border = "1px solid green";
+        }
+        if(validation?.email ?? false){
+            document.getElementById('emailMessage').innerHTML = validation.email;
+            document.getElementById('email').style.border = "1px solid red";
+        }else {
+            document.getElementById('emailMessage').innerHTML = "";
+            document.getElementById('email').style.border = "1px solid green";
+        }
     }
 
     function sort(field){
@@ -179,7 +206,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getFeedbacks',
+            url: url + '/getFeedbacks',
             data: data,
             dataType: "json",
             success: function (data){
@@ -231,7 +258,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getFeedbackById',
+            url: url + '/getFeedbackById',
             data: data,
             dataType: "json",
             success: function (feedback){
@@ -262,7 +289,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteFeedbackById',
+            url: url + '/deleteFeedbackById',
             data: data,
             dataType: "json",
             success: function (success){

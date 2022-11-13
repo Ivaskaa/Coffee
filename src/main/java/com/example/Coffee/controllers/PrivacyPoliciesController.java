@@ -2,6 +2,7 @@ package com.example.Coffee.controllers;
 
 import com.example.Coffee.entities.Admin;
 import com.example.Coffee.entities.PrivacyPolicy;
+import com.example.Coffee.entities.ingredients.supplement.SupplementDto;
 import com.example.Coffee.repository.PrivacyPoliciesRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,9 +10,16 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -37,11 +45,19 @@ public class PrivacyPoliciesController {
     @PostMapping("/updatePrivacyPolicy")
     @ResponseBody
     public String updatePrivacyPolicies(
-            String text
+            @RequestBody @Valid PrivacyPolicy privacyPolicy,
+            BindingResult bindingResult
     ) throws JsonProcessingException {
-        PrivacyPolicy privacyPolicy = policiesRepository.findById(1L).orElseThrow();
-        privacyPolicy.setText(text);
-        policiesRepository.save(privacyPolicy);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        PrivacyPolicy privacyPolicy2 = policiesRepository.findById(1L).orElseThrow();
+        privacyPolicy2.setText(privacyPolicy.getText());
+        policiesRepository.save(privacyPolicy2);
+        return mapper.writeValueAsString(null);
     }
 }

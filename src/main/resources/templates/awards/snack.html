@@ -63,6 +63,9 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    
     let modal = document.getElementById("popup");
     let orderId = "[[${orderId}]]";
 
@@ -96,7 +99,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../awards/getSnackOrders',
+            url: url + '/awards/getSnackOrders',
             data: data,
             dataType: "json",
             success: function (data){
@@ -166,51 +169,48 @@
             "<div class=\"modal-content\">\n" +
             "            <span onclick=\"closePopup()\" class=\"close\">&times;</span>\n" +
             "            <form id=\"add-form\" class=\"mt-2\">\n" +
-            "\n" +
             "                <div class='row'>\n" +
             "                   <div class='col'>\n" +
             "                       <div class=\"form-group mt-2\">\n" +
             "                           <label>Snack:</label>\n" +
             "                           <select onchange='updateSize()' id='snack' name='snack' class='form-control'>" +
-            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose snack</option>" +
+            "                               <option data-value='" + null + "' disabled selected>Choose snack</option>" +
             "                           </select>" +
+            "                           <p id='snackMessage' style=\"color: red\"></p>" +
             "                       </div>\n" +
             "                   </div>\n" +
             "                   <div class='col'>\n" +
             "                       <div class=\"form-group mt-2\">\n" +
             "                           <label>Size:</label>\n" +
             "                           <select id='size' name='size' class='form-control'>" +
-            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>" +
+            "                               <option data-value='" + null + "' disabled selected>Choose size</option>" +
             "                           </select>" +
+            "                           <p id='sizeMessage' style=\"color: red\"></p>" +
             "                       </div>\n" +
             "                   </div>\n" +
             "               </div>\n" +
-            "\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Sauce:</label>\n" +
             "                    <select id='sauce' name='sauce' class='form-control'>" +
             "                    </select>" +
             "                </div>\n" +
-            "\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Supplement:</label>\n" +
             "                    <select id='supplement' name='supplement' class='form-control'>" +
             "                    </select>" +
             "                </div>\n" +
-            "\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                     <label>Count:</label>\n" +
             "                     <input id=\"count\" min='0' value='1' type='number' name=\"count\"\n" +
             "                            placeholder=\"Enter count\" maxlength='5' class=\"form-control\">\n" +
+            "                    <p id='countMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
-            "\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
             "                    <label class=\"m-1\">Active:</label>\n" +
             "                    <div class=\"form-check form-switch m-1\">\n" +
             "                        <input id=\"active\" type=\"checkbox\" name=\"active\" class=\"form-check-input\" checked=\"checked\" role=\"switch\">\n" +
             "                    </div>\n" +
             "                </div>\n" +
-            "\n" +
             "                <button onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>\n" +
             "            </form>\n" +
             "        </div>"
@@ -220,50 +220,35 @@
 
     function save(style){
         let snackOrder = {};
-        let selectSnack = document.getElementById("snack");
-        let snack = ($('#snack')).find(":selected").data("value");
-        if (snack === null){
-            selectSnack.style.borderColor = "red";
-            return false;
-        } else {
-            selectSnack.style.borderColor = "#ced4da";
-        }
 
-        let selectSize = document.getElementById("size");
-        let size = ($('#size')).find(":selected").data("value");
-        if (size === null){
-            selectSize.style.borderColor = "red";
-            return false;
-        } else {
-            selectSize.style.borderColor = "#ced4da";
-        }
-
-        let sauce = ($('#sauce')).find(":selected").data("value");
-        let supplement = ($('#supplement')).find(":selected").data("value");
         let count = document.getElementById('count');
         let active = document.getElementById('active');
 
-
-        snackOrder.snack = snack
-        snackOrder.size = size
-        snackOrder.sauce = sauce
-        snackOrder.supplement = supplement
+        snackOrder.snackId = $('#snack').val();
+        snackOrder.sizeId = $('#size').val()
+        snackOrder.sauceId = $('#sauce').val()
+        snackOrder.supplementId = $('#supplement').val()
         snackOrder.count = parseInt(count.value)
         snackOrder.active = active.checked
 
         if(style === 'add') {
             $.ajax({
                 type: 'post',
-                url: '../awards/addSnackOrder',
+                url: url + '/awards/addSnackOrder',
                 data: JSON.stringify(snackOrder),
                 contentType: "application/json; charset=utf-8",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /awards/addSnackOrder');
+                success: function (data) {
+                    console.log('success /addSnackOrder');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
-                    console.log('error /awards/addSnackOrder');
+                    console.log('error /addSnackOrder');
                 }
             });
         }
@@ -272,18 +257,47 @@
             snackOrder.id = IdForUpdating;
             $.ajax({
                 type: 'post',
-                url: '../awards/updateSnackOrder',
+                url: url + '/awards/updateSnackOrder',
                 data: JSON.stringify(snackOrder),
                 contentType: "application/json; charset=utf-8",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /awards/updateSnackOrder');
+                success: function (data) {
+                    console.log('success /updateSnackOrder');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
-                    console.log('error /awards/updateSnackOrder');
+                    console.log('error /updateSnackOrder');
                 }
             });
+        }
+    }
+
+    function validationMessage(validation){
+        if(validation?.snackId ?? false){
+            document.getElementById('snackMessage').innerHTML = validation.snackId;
+            document.getElementById('snack').style.border = "1px solid red";
+        }else {
+            document.getElementById('snackMessage').innerHTML = "";
+            document.getElementById('snack').style.border = "1px solid green";
+        }
+        if(validation?.sizeId ?? false){
+            document.getElementById('sizeMessage').innerHTML = validation.sizeId;
+            document.getElementById('size').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeMessage').innerHTML = "";
+            document.getElementById('size').style.border = "1px solid green";
+        }
+        if(validation?.count ?? false){
+            document.getElementById('countMessage').innerHTML = validation.count;
+            document.getElementById('count').style.border = "1px solid red";
+        }else {
+            document.getElementById('countMessage').innerHTML = "";
+            document.getElementById('count').style.border = "1px solid green";
         }
     }
 
@@ -291,18 +305,18 @@
         let data = {id: id}
         $.ajax({
             type: 'get',
-            url: '../awards/getSnackOrderById',
+            url: url + '/awards/getSnackOrderById',
             data: data,
             dataType: "json",
             success: function (SnackOrder){
-                console.log('success /awards/getOrderById');
+                console.log('success /getOrderById');
                 Order = SnackOrder;
                 IdForUpdating = Order.id;
                 Order.snack.sizes = null;
                 openPopup('edit');
             },
             error: function() {
-                console.log('error /awards/getSnackOrderById');
+                console.log('error /getSnackOrderById');
             }
         });
     }
@@ -311,15 +325,15 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../awards/deleteSnackOrderById',
+            url: url + '/awards/deleteSnackOrderById',
             data: data,
             dataType: "json",
             success: function (success){
-                console.log(success + ' /awards/deleteSnackOrderById');
+                console.log(success + ' /deleteSnackOrderById');
                 updatePage(currentPage, sortingField, sortingDirection)
             },
             error: function() {
-                console.log('error /awards/deleteSnackOrderById');
+                console.log('error /deleteSnackOrderById');
             }
         });
     }
@@ -339,7 +353,7 @@
     function uploadSelect(){
         $.ajax({
             type: 'get',
-            url: '../getAllActiveSnacks',
+            url: url + '/getAllActiveSnacks',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveSnacks');
@@ -347,7 +361,7 @@
                     snack.sizes = null;
                     if(JSON.stringify(snack) === JSON.stringify(Order?.snack?? null)) {
                         $("#snack").append($("" +
-                            "<option data-value='" + JSON.stringify(snack) + "' selected> " + snack.name + "</option>"
+                            "<option value='" + snack.id + "' selected> " + snack.name + "</option>"
                         ));
                         updateSize()
                         let count = document.getElementById("count");
@@ -356,7 +370,7 @@
                         active.checked = Order.active;
                     } else {
                         $("#snack").append($("" +
-                            "<option data-value='" + JSON.stringify(snack) + "'> " + snack.name + "</option>"
+                            "<option value='" + snack.id + "'> " + snack.name + "</option>"
                         ));
                     }
                 })
@@ -367,21 +381,21 @@
         });
         $.ajax({
             type: 'get',
-            url: '../getAllActiveSauces',
+            url: url + '/getAllActiveSauces',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveSauces');
                 $("#sauce").append($("" +
-                    "<option data-value='" + JSON.stringify(null) + "'>Without sauce</option>"
+                    "<option value='" + null + "'>Without sauce</option>"
                 ));
                 data.forEach((sauce) =>{
                     if(JSON.stringify(sauce) === JSON.stringify(Order?.sauce?? null)) {
                         $("#sauce").append($("" +
-                            "<option data-value='" + JSON.stringify(sauce) + "' selected> " + sauce.name + " ("+ sauce.price  + ")</option>"
+                            "<option value='" + sauce.id + "' selected> " + sauce.name + " ("+ sauce.price  + ")</option>"
                         ));
                     } else {
                         $("#sauce").append($("" +
-                            "<option data-value='" + JSON.stringify(sauce) + "'> " + sauce.name + " ("+ sauce.price  + ")</option>"
+                            "<option value='" + sauce.id + "'> " + sauce.name + " ("+ sauce.price  + ")</option>"
                         ));
                     }
                 })
@@ -392,21 +406,21 @@
         });
         $.ajax({
             type: 'get',
-            url: '../getAllActiveSupplements',
+            url: url + '/getAllActiveSupplements',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveSupplements');
                 $("#supplement").append($("" +
-                    "<option data-value='" + JSON.stringify(null) + "'>Without supplement</option>"
+                    "<option value='" + null + "'>Without supplement</option>"
                 ));
                 data.forEach((supplement) =>{
                     if(JSON.stringify(supplement) === JSON.stringify(Order?.supplement?? null)) {
                         $("#supplement").append($("" +
-                            "<option data-value='" + JSON.stringify(supplement) + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                            "<option value='" + supplement.id + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
                         ));
                     } else {
                         $("#supplement").append($("" +
-                            "<option data-value='" + JSON.stringify(supplement) + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                            "<option value='" + supplement.id + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
                         ));
                     }
                 })
@@ -418,24 +432,24 @@
     }
 
     function updateSize(){
-        let snack = ($('#snack')).find(":selected").data("value");
+        let snackId = $('#snack').val();
         $.ajax({
             type: 'get',
-            url: '../getSnackById',
-            data: {id: snack.id},
+            url: url + '/getSnackById',
+            data: {id: snackId},
             dataType: "json",
             success: function (data){
                 console.log('success /getSnackById');
                 $("#size").empty();
-                $("#size").append($("<option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>"));
+                $("#size").append($("<option value='" + null + "' disabled selected>Choose size</option>"));
                 data.sizes.forEach((size) =>{
                     if(JSON.stringify(size) === JSON.stringify(Order?.size?? null)){
                         $("#size").append($("" +
-                            "<option data-value='" + JSON.stringify(size) + "' selected> " + size.name + " (" + size.price + ")</option>"
+                            "<option value='" + size.id + "' selected> " + size.name + " (" + size.price + ")</option>"
                         ));
                     } else {
                         $("#size").append($("" +
-                            "<option data-value='" + JSON.stringify(size) + "'> " + size.name + " (" + size.price + ")</option>"
+                            "<option value='" + size.id + "'> " + size.name + " (" + size.price + ")</option>"
                         ));
                     }
                 })

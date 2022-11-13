@@ -18,8 +18,10 @@ public class CoffeeSize {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotEmpty(message = "Must not be empty")
+    @Size(max = 255, message = "Must be less than 255 characters")
     private String name;
     @NotEmpty(message = "Must not be empty")
+    @Size(max = 255, message = "Must be less than 255 characters")
     private String description;
     @NotNull(message = "Must not be empty")
     private Double price;

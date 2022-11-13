@@ -77,4 +77,8 @@ public class AdminService implements UserDetailsService {
         log.info("username: {} want to login", username);
         return admin;
     }
+
+    public Admin findUserByUsername(String username) {
+        return adminRepository.findByUsername(username);
+    }
 }

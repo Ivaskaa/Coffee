@@ -1,6 +1,7 @@
 package com.example.Coffee.controllers.awards;
 
 import com.example.Coffee.entities.Admin;
+import com.example.Coffee.entities.ingredients.alcohol.AlcoholDto;
 import com.example.Coffee.entities.order.coffee.CoffeeOrderDto;
 import com.example.Coffee.service.order.CoffeeOrderService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -9,9 +10,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/awards")
@@ -48,20 +54,36 @@ public class CoffeeAwardsController {
     @PostMapping("/addCoffeeOrder")
     @ResponseBody
     public String addCoffeeOrder(
-            @RequestBody CoffeeOrderDto coffeeOrderDto  // @RequestBody for json
+            @RequestBody @Valid CoffeeOrderDto coffeeOrderDto,
+            BindingResult bindingResult
     ) throws IOException {
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
         coffeeOrderService.save(coffeeOrderDto.build());
-        return mapper.writeValueAsString("success");
+        return mapper.writeValueAsString(null);
     }
 
 
     @PostMapping("/updateCoffeeOrder")
     @ResponseBody
     public String updateCoffeeOrder(
-            @RequestBody CoffeeOrderDto coffeeOrderDto
+            @RequestBody @Valid CoffeeOrderDto coffeeOrderDto,
+            BindingResult bindingResult
     ) throws IOException {
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
         coffeeOrderService.update(coffeeOrderDto.build());
-        return mapper.writeValueAsString("success");
+        return mapper.writeValueAsString(null);
     }
 
     @GetMapping("/getCoffeeOrderById")

@@ -58,10 +58,14 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url: ' + url)
+    
     let modal = document.getElementById("popup");
 
-    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
-    let url =window.location.protocol+"//"+ window.location.host +context+"/img/education/";
+    let context2 = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
+    let imageUrl =window.location.protocol+"//"+ window.location.host +context2+"/img/education/";
 
     let currentPage = 1;
     let sortingField = 'id';
@@ -84,16 +88,19 @@
             "                    <label>Title:</label>\n" +
             "                    <input id=\"title\" type=\"text\" maxlength=\"40\" name=\"title\"\n" +
             "                           placeholder=\"Enter title\" class=\"form-control\">\n" +
+            "                    <p id='titleMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Photo:</label>\n" +
             "                    <input onchange='showImage()' id=\"file\" type=\"file\" name=\"photo\" class=\"form-control\">\n" +
             "                    <img  src=\"\" id=\"image\" style=\"height: 200px; display: none;\"/>\n" +
+            "                    <p id='imageMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Text:</label>\n" +
             "                    <textarea id=\"text\" type=\"text\" maxlength=\"255\" name=\"text\"\n" +
             "                              placeholder=\"Enter text\" class=\"form-control\"></textarea>\n" +
+            "                    <p id='textMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
             "                    <label class=\"m-1\">Active:</label>\n" +
@@ -134,37 +141,30 @@
         }
         let formData = new FormData();
         let educationTitle = document.getElementById('title');
-        if(validationInputTextEmpty(educationTitle)){
-            return false;
-        }
         let educationText = document.getElementById('text');
-        if(validationInputTextEmpty(educationText)){
-            return false;
-        }
         let photo = document.getElementById("file");
-        if(style === 'add') {
-            if (validationInputFileEmpty(photo)) {
-                return false;
-            }
-        }
         let educationActive = document.getElementById('active');
         education.title = educationTitle.value;
         education.text = educationText.value;
         education.active = educationActive.checked;
-        formData.append('education', JSON.stringify(education));
-        formData.append('file', photo.files[0]);
         if(style === 'add') {
+            formData.append('education', new Blob([JSON.stringify(education)], {type : 'application/json'}));
+            formData.append('file', photo.files[0]);
             $.ajax({
                 type: 'post',
-                url: '../addEducation',
-                contentType: false,
+                url: url + '/addEducation',
+                contentType: "application/json; charset=utf-8",
                 processData: false,
                 data: formData,
-                dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /addEducation');
+                success: function (validation) {
+                    console.log('success /addEducation');
+                    // let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /addEducation');
@@ -173,23 +173,53 @@
         }
 
         if(style === 'edit') {
-            formData.append('id', IdForUpdating);
+            education.id = IdForUpdating;
+            formData.append('education', new Blob([JSON.stringify(education)], {type : 'application/json'}));
+            formData.append('file', photo.files[0]);
             $.ajax({
                 type: 'post',
-                url: '../updateEducation',
+                url: url + '/updateEducation',
                 contentType: false,
                 processData: false,
                 data: formData,
                 dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /updateEducation');
+                success: function (validation) {
+                    console.log('success /updateEducation');
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /updateEducation');
                 }
             });
+        }
+    }
+
+    function validationMessage(validation){
+        if(validation?.text ?? false){
+            document.getElementById('textMessage').innerHTML = validation.text;
+            document.getElementById('text').style.border = "1px solid red";
+        }else {
+            document.getElementById('textMessage').innerHTML = "";
+            document.getElementById('text').style.border = "1px solid green";
+        }
+        if(validation?.title ?? false){
+            document.getElementById('titleMessage').innerHTML = validation.title;
+            document.getElementById('title').style.border = "1px solid red";
+        }else {
+            document.getElementById('titleMessage').innerHTML = "";
+            document.getElementById('title').style.border = "1px solid green";
+        }
+        if(validation?.photo ?? false){
+            document.getElementById('imageMessage').innerHTML = validation.photo;
+            document.getElementById('image').style.border = "1px solid red";
+        }else {
+            document.getElementById('imageMessage').innerHTML = "";
+            document.getElementById('image').style.border = "1px solid green";
         }
     }
 
@@ -212,7 +242,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getEducations',
+            url: url + '/getEducations',
             data: data,
             dataType: "json",
             success: function (data){
@@ -239,7 +269,7 @@
                 "<p>" + education.title + "</p>" +
                 "</td>" +
                 "<td>" +
-                "<img style='height: 100px' src='" + url + education.photo + "'>" +
+                "<img style='height: 100px' src='" + imageUrl + education.photo + "'>" +
                 "</td>" +
                 "<td>" +
                 "<p>" + education.text + "</p>" +
@@ -265,7 +295,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getEducationById',
+            url: url + '/getEducationById',
             data: data,
             dataType: "json",
             success: function (education){
@@ -274,6 +304,9 @@
                 educationName.value = education.title;
                 let educationPrice = document.getElementById('text');
                 educationPrice.value = education.text;
+                let image = document.getElementById("image");
+                image.src = imageUrl + education.photo;
+                image.style.display = "block";
                 let coffeeActive = document.getElementById('active');
                 coffeeActive.checked = education.active;
             },
@@ -287,7 +320,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteEducationById',
+            url: url + '/deleteEducationById',
             data: data,
             dataType: "json",
             success: function (success){

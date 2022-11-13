@@ -59,10 +59,14 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url: ' + url)
+
     let modal = document.getElementById("popup");
 
-    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
-    let url =window.location.protocol+"//"+ window.location.host +context+"/img/sandwich/";
+    let context2 = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
+    let imageUrl =window.location.protocol+"//"+ window.location.host + context2 +"/img/sandwich/";
 
     let currentPage = 1;
     let sortingField = 'id';
@@ -229,20 +233,25 @@
             size.price = (parseInt(size.price * 100)) / 100;
             sandwich.sizes.push(size);
         }
-        formData.append('sandwich', JSON.stringify(sandwich));
-        formData.append('file', sandwichPhoto.files[0]);
         if(style === 'add') {
+            formData.append('sandwich', new Blob([JSON.stringify(sandwich)], {type : 'application/json'}));
+            formData.append('file', sandwichPhoto.files[0]);
             $.ajax({
                 type: 'post',
-                url: '../addSandwich',
+                url: url + '/addSandwich',
                 contentType: false,
                 processData: false,
                 data: formData,
                 dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /addSandwich');
+                success: function (data) {
+                    console.log('success /addSandwich');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        // validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /addSandwich');
@@ -251,19 +260,25 @@
         }
 
         if(style === 'edit') {
-            console.log("save edit " + IdForUpdating)
-            formData.append('id', IdForUpdating);
+            sandwich.id = IdForUpdating;
+            formData.append('sandwich', new Blob([JSON.stringify(sandwich)], {type : 'application/json'}));
+            formData.append('file', sandwichPhoto.files[0]);
             $.ajax({
                 type: 'post',
-                url: '../updateSandwich',
+                url: url + '/updateSandwich',
                 contentType: false,
                 processData: false,
                 data: formData,
                 dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /updateSandwich');
+                success: function (data) {
+                    console.log('success /updateSandwich');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        // validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /updateSandwich');
@@ -337,7 +352,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getSandwiches',
+            url: url + '/getSandwiches',
             data: data,
             dataType: "json",
             success: function (data){
@@ -370,7 +385,7 @@
                 "<p>" + coffee.name + "</p>" +
                 "</td>" +
                 "<td>" +
-                "<img style='height: 100px' src='" + url + coffee.photo + "'>" +
+                "<img style='height: 100px' src='" + imageUrl + coffee.photo + "'>" +
                 "</td>" +
                 "<td>" +
                 "<p>" + names + "</p>" +
@@ -400,7 +415,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getSandwichById',
+            url: url + '/getSandwichById',
             data: data,
             dataType: "json",
             success: function (coffee){
@@ -412,7 +427,7 @@
                 let coffeeActive = document.getElementById('active');
                 coffeeActive.checked = coffee.active;
                 let image = document.getElementById("image");
-                image.src = url + coffee.photo;
+                image.src = imageUrl + coffee.photo;
                 image.style.display = "block";
                 for(let i = 1; i <= coffee.sizes.length; i++){
                     if(i > 1){
@@ -437,7 +452,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteSandwichById',
+            url: url + '/deleteSandwichById',
             data: data,
             dataType: "json",
             success: function (success){

@@ -43,7 +43,7 @@ function validationInputCheckUniqueUsername(element) {
     }
     $.ajax({
         type: 'get',
-        url: '../checkUniqueUsername',
+        url: url + '/checkUniqueUsername',
         data: data,
         dataType: "json",
         async: false,
@@ -72,7 +72,7 @@ function validationInputCheckUniquePhone(phone){
     }
     $.ajax({
         type: 'get',
-        url: '../checkUniquePhone',
+        url: url + '/checkUniquePhone',
         data: data,
         dataType: "json",
         async: false,

@@ -59,10 +59,14 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url: ' + url)
+
     let modal = document.getElementById("popup");
 
-    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
-    let url =window.location.protocol+"//"+ window.location.host +context+"/img/snack/";
+    let context2 = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
+    let imageUrl =window.location.protocol+"//"+ window.location.host + context2 +"/img/snack/";
 
     let currentPage = 1;
     let sortingField = 'id';
@@ -225,20 +229,25 @@
             size.price = (parseInt(size.price * 100)) / 100;
             snack.sizes.push(size);
         }
-        formData.append('snack', JSON.stringify(snack));
-        formData.append('file', snackPhoto.files[0]);
         if(style === 'add') {
+            formData.append('snack', new Blob([JSON.stringify(snack)], {type : 'application/json'}));
+            formData.append('file', snackPhoto.files[0]);
             $.ajax({
                 type: 'post',
-                url: '../addSnack',
+                url: url + '/addSnack',
                 contentType: false,
                 processData: false,
                 data: formData,
                 dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /addSnack');
+                success: function (data) {
+                    console.log('success /addSnack');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        // validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /addSnack');
@@ -247,18 +256,25 @@
         }
 
         if(style === 'edit') {
-            formData.append('id', IdForUpdating);
+            snack.id = IdForUpdating;
+            formData.append('snack', new Blob([JSON.stringify(snack)], {type : 'application/json'}));
+            formData.append('file', snackPhoto.files[0]);
             $.ajax({
                 type: 'post',
-                url: '../updateSnack',
+                url: url + '/updateSnack',
                 contentType: false,
                 processData: false,
                 data: formData,
                 dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /updateSnack');
+                success: function (data) {
+                    console.log('success /updateSnack');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        // validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /updateSnack');
@@ -333,7 +349,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getSnacks',
+            url: url + '/getSnacks',
             data: data,
             dataType: "json",
             success: function (data){
@@ -366,7 +382,7 @@
                 "<p>" + tea.name + "</p>" +
                 "</td>" +
                 "<td>" +
-                "<img style='height: 100px' src='" + url + tea.photo + "'>" +
+                "<img style='height: 100px' src='" + imageUrl + tea.photo + "'>" +
                 "</td>" +
                 "<td>" +
                 "<p>" + names + "</p>" +
@@ -396,7 +412,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getSnackById',
+            url: url + '/getSnackById',
             data: data,
             dataType: "json",
             success: function (tea){
@@ -408,7 +424,7 @@
                 let teaActive = document.getElementById('active');
                 teaActive.checked = tea.active;
                 let image = document.getElementById("image");
-                image.src = url + tea.photo;
+                image.src = imageUrl + tea.photo;
                 image.style.display = "block";
                 for(let i = 1; i <= tea.sizes.length; i++){
                     if(i > 1){
@@ -433,7 +449,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteSnackById',
+            url: url + '/deleteSnackById',
             data: data,
             dataType: "json",
             success: function (success){

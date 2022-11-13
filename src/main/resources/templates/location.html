@@ -58,6 +58,10 @@
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDr6-T4FGjJSeOkt3ZaLkJXTTiX9KINLxc&callback=myMap"></script>
 
 <script>
+    let context2 = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context2;
+    console.log('url: ' + url)
+
     let modal = document.getElementById("popup");
 
     let currentPage = 1;
@@ -82,6 +86,7 @@
             "                    <label>Name:</label>\n" +
             "                    <input id=\"name\" type=\"text\" maxlength=\"255\" name=\"name\"\n" +
             "                           placeholder=\"Enter name\" class=\"form-control\">\n" +
+            "                    <p id='nameMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "                <div> To set the coordinates exactly, you need to follow the link <a href='https://www.google.com/maps/@48.5330233,31.1669321,7z'>hear</a>, and right-click on the object and click on the coordinates, then insert them into the fields</div>" +
             "\n" +
@@ -89,12 +94,14 @@
             "                    <label>Latitude:</label>\n" +
             "                    <input oninput='myMap()' id=\"latitude\" type=\"text\" maxlength=\"40\" name=\"latitude\"\n" +
             "                              placeholder=\"Enter latitude\" class=\"form-control\">\n" +
+            "                    <p id='latitudeMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Longitude:</label>\n" +
             "                    <input oninput='myMap()' id=\"longitude\" type=\"text\" maxlength=\"40\" name=\"longitude\"\n" +
             "                              placeholder=\"Enter longitude\" class=\"form-control\">\n" +
+            "                    <p id='longitudeMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
@@ -154,17 +161,8 @@
     function save(style){
         let location = {}
         let locationName = document.getElementById('name');
-        if(validationInputTextEmpty(locationName)){
-            return false;
-        }
         let latitude = document.getElementById("latitude");
-        if(validationInputTextDouble(latitude)){
-            return false;
-        }
         let longitude = document.getElementById("longitude");
-        if(validationInputTextDouble(longitude)){
-            return false;
-        }
         let longitudeActive = document.getElementById('active');
         location.name = locationName.value;
         location.latitude = latitude.value;
@@ -173,13 +171,18 @@
         if(style === 'add') {
             $.ajax({
                 type: 'post',
-                url: '../addLocation',
-                data: location,
-                dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /addLocation');
+                url: url + '/addLocation',
+                data: JSON.stringify(location),
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    console.log('success /addLocation');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /addLocation');
@@ -190,18 +193,47 @@
             location.id = IdForUpdating;
             $.ajax({
                 type: 'post',
-                url: '../updateLocation',
-                data: location,
-                dataType: "json",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /updateLocation');
+                url: url + '/updateLocation',
+                data: JSON.stringify(location),
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    console.log('success /updateLocation');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
                     console.log('error /updateLocation');
                 }
             });
+        }
+    }
+
+    function validationMessage(validation){
+        if(validation?.name ?? false){
+            document.getElementById('nameMessage').innerHTML = validation.name;
+            document.getElementById('name').style.border = "1px solid red";
+        }else {
+            document.getElementById('nameMessage').innerHTML = "";
+            document.getElementById('name').style.border = "1px solid green";
+        }
+        if(validation?.latitude ?? false){
+            document.getElementById('latitudeMessage').innerHTML = validation.latitude;
+            document.getElementById('latitude').style.border = "1px solid red";
+        }else {
+            document.getElementById('latitudeMessage').innerHTML = "";
+            document.getElementById('latitude').style.border = "1px solid green";
+        }
+        if(validation?.longitude ?? false){
+            document.getElementById('longitudeMessage').innerHTML = validation.longitude;
+            document.getElementById('longitude').style.border = "1px solid red";
+        }else {
+            document.getElementById('longitudeMessage').innerHTML = "";
+            document.getElementById('longitude').style.border = "1px solid green";
         }
     }
 
@@ -223,7 +255,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getLocations',
+            url: url + '/getLocations',
             data: data,
             dataType: "json",
             success: function (data){
@@ -274,7 +306,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getLocationById',
+            url: url + '/getLocationById',
             data: data,
             dataType: "json",
             success: function (location){
@@ -299,7 +331,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteLocationById',
+            url: url + '/deleteLocationById',
             data: data,
             dataType: "json",
             success: function (success){

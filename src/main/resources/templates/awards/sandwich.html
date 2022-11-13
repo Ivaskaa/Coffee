@@ -63,6 +63,9 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    
     let modal = document.getElementById("popup");
     let orderId = "[[${orderId}]]";
 
@@ -96,7 +99,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../awards/getSandwichOrders',
+            url: url + '/awards/getSandwichOrders',
             data: data,
             dataType: "json",
             success: function (data){
@@ -172,16 +175,18 @@
             "                       <div class=\"form-group mt-2\">\n" +
             "                           <label>Sandwich:</label>\n" +
             "                           <select onchange='updateSize()' id='sandwich' name='sandwich' class='form-control'>" +
-            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose sandwich</option>" +
+            "                               <option value='" + null + "' disabled selected>Choose sandwich</option>" +
             "                           </select>" +
+            "                           <p id='sandwichMessage' style=\"color: red\"></p>" +
             "                       </div>\n" +
             "                   </div>\n" +
             "                   <div class='col'>\n" +
             "                       <div class=\"form-group mt-2\">\n" +
             "                           <label>Size:</label>\n" +
             "                           <select id='size' name='size' class='form-control'>" +
-            "                               <option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>" +
+            "                               <option value='" + null + "' disabled selected>Choose size</option>" +
             "                           </select>" +
+            "                           <p id='sizeMessage' style=\"color: red\"></p>" +
             "                       </div>\n" +
             "                   </div>\n" +
             "               </div>\n" +
@@ -202,6 +207,7 @@
             "                     <label>Count:</label>\n" +
             "                     <input id=\"count\" min='0' value='1' type='number' name=\"count\"\n" +
             "                            placeholder=\"Enter count\" maxlength='5' class=\"form-control\">\n" +
+            "                    <p id='countMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
             "\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
@@ -220,50 +226,35 @@
 
     function save(style){
         let sandwichOrder = {};
-        let selectSandwich = document.getElementById("sandwich");
-        let sandwich = ($('#sandwich')).find(":selected").data("value");
-        if (sandwich === null){
-            selectSandwich.style.borderColor = "red";
-            return false;
-        } else {
-            selectSandwich.style.borderColor = "#ced4da";
-        }
 
-        let selectSize = document.getElementById("size");
-        let size = ($('#size')).find(":selected").data("value");
-        if (size === null){
-            selectSize.style.borderColor = "red";
-            return false;
-        } else {
-            selectSize.style.borderColor = "#ced4da";
-        }
-
-        let sauce = ($('#sauce')).find(":selected").data("value");
-        let supplement = ($('#supplement')).find(":selected").data("value");
         let count = document.getElementById('count');
         let active = document.getElementById('active');
 
-
-        sandwichOrder.sandwich = sandwich
-        sandwichOrder.size = size
-        sandwichOrder.sauce = sauce
-        sandwichOrder.supplement = supplement
+        sandwichOrder.sandwichId = $('#sandwich').val()
+        sandwichOrder.sizeId = $('#size').val()
+        sandwichOrder.sauceId = $('#sauce').val()
+        sandwichOrder.supplementId = $('#supplement').val()
         sandwichOrder.count = parseInt(count.value)
         sandwichOrder.active = active.checked
 
         if(style === 'add') {
             $.ajax({
                 type: 'post',
-                url: '../awards/addSandwichOrder',
+                url: url + '/awards/addSandwichOrder',
                 data: JSON.stringify(sandwichOrder),
                 contentType: "application/json; charset=utf-8",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /awards/addSandwichOrder');
+                success: function (data) {
+                    console.log('success /addSandwichOrder');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
-                    console.log('error /awards/addSandwichOrder');
+                    console.log('error /addSandwichOrder');
                 }
             });
         }
@@ -272,18 +263,47 @@
             sandwichOrder.id = IdForUpdating;
             $.ajax({
                 type: 'post',
-                url: '../awards/updateSandwichOrder',
+                url: url + '/awards/updateSandwichOrder',
                 data: JSON.stringify(sandwichOrder),
                 contentType: "application/json; charset=utf-8",
-                success: function (success) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
-                    console.log(success + ' /awards/updateSandwichOrder');
+                success: function (data) {
+                    console.log('success /updateSandwichOrder');
+                    let validation = JSON.parse(data);
+                    if (validation == null) {
+                        updatePage(currentPage, sortingField, sortingDirection)
+                        closePopup();
+                    } else {
+                        validationMessage(validation);
+                    }
                 },
                 error: function () {
-                    console.log('error /awards/updateSandwichOrder');
+                    console.log('error /updateSandwichOrder');
                 }
             });
+        }
+    }
+
+    function validationMessage(validation){
+        if(validation?.sandwichId ?? false){
+            document.getElementById('sandwichMessage').innerHTML = validation.sandwichId;
+            document.getElementById('sandwich').style.border = "1px solid red";
+        }else {
+            document.getElementById('sandwichMessage').innerHTML = "";
+            document.getElementById('sandwich').style.border = "1px solid green";
+        }
+        if(validation?.sizeId ?? false){
+            document.getElementById('sizeMessage').innerHTML = validation.sizeId;
+            document.getElementById('size').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeMessage').innerHTML = "";
+            document.getElementById('size').style.border = "1px solid green";
+        }
+        if(validation?.count ?? false){
+            document.getElementById('countMessage').innerHTML = validation.count;
+            document.getElementById('count').style.border = "1px solid red";
+        }else {
+            document.getElementById('countMessage').innerHTML = "";
+            document.getElementById('count').style.border = "1px solid green";
         }
     }
 
@@ -291,18 +311,18 @@
         let data = {id: id}
         $.ajax({
             type: 'get',
-            url: '../awards/getSandwichOrderById',
+            url: url + '/awards/getSandwichOrderById',
             data: data,
             dataType: "json",
             success: function (sandwichOrder){
-                console.log('success /awards/getOrderById');
+                console.log('success /getSandwichOrderById');
                 Order = sandwichOrder;
                 IdForUpdating = Order.id;
                 Order.sandwich.sizes = null;
                 openPopup('edit');
             },
             error: function() {
-                console.log('error /awards/getSandwichOrderById');
+                console.log('error /getSandwichOrderById');
             }
         });
     }
@@ -311,15 +331,15 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../awards/deleteSandwichOrderById',
+            url: url + '/awards/deleteSandwichOrderById',
             data: data,
             dataType: "json",
             success: function (success){
-                console.log(success + ' /awards/deleteSandwichOrderById');
+                console.log(success + ' /deleteSandwichOrderById');
                 updatePage(currentPage, sortingField, sortingDirection)
             },
             error: function() {
-                console.log('error /awards/deleteSandwichOrderById');
+                console.log('error /deleteSandwichOrderById');
             }
         });
     }
@@ -339,7 +359,7 @@
     function uploadSelect(){
         $.ajax({
             type: 'get',
-            url: '../getAllActiveSandwiches',
+            url: url + '/getAllActiveSandwiches',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveSandwiches');
@@ -347,7 +367,7 @@
                     sandwich.sizes = null;
                     if(JSON.stringify(sandwich) === JSON.stringify(Order?.sandwich?? null)) {
                         $("#sandwich").append($("" +
-                            "<option data-value='" + JSON.stringify(sandwich) + "' selected> " + sandwich.name + "</option>"
+                            "<option value='" + sandwich.id + "' selected> " + sandwich.name + "</option>"
                         ));
                         updateSize()
                         let count = document.getElementById("count");
@@ -356,7 +376,7 @@
                         active.checked = Order.active;
                     } else {
                         $("#sandwich").append($("" +
-                            "<option data-value='" + JSON.stringify(sandwich) + "'> " + sandwich.name + "</option>"
+                            "<option value='" + sandwich.id + "'> " + sandwich.name + "</option>"
                         ));
                     }
                     // "<option value='" + sandwich + "'> " + sandwich.name + " " + sandwich.sizes.forEach((size) => {size.name}) + "</option>"
@@ -368,21 +388,21 @@
         });
         $.ajax({
             type: 'get',
-            url: '../getAllActiveSauces',
+            url: url + '/getAllActiveSauces',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveSauces');
                 $("#sauce").append($("" +
-                    "<option data-value='" + JSON.stringify(null) + "'>Without sauce</option>"
+                    "<option value='" + null + "'>Without sauce</option>"
                 ));
                 data.forEach((sauce) =>{
                     if(JSON.stringify(sauce) === JSON.stringify(Order?.sauce?? null)) {
                         $("#sauce").append($("" +
-                            "<option data-value='" + JSON.stringify(sauce) + "' selected> " + sauce.name + " ("+ sauce.price  + ")</option>"
+                            "<option value='" + sauce.id + "' selected> " + sauce.name + " ("+ sauce.price  + ")</option>"
                         ));
                     } else {
                         $("#sauce").append($("" +
-                            "<option data-value='" + JSON.stringify(sauce) + "'> " + sauce.name + " ("+ sauce.price  + ")</option>"
+                            "<option value='" + sauce.id + "'> " + sauce.name + " ("+ sauce.price  + ")</option>"
                         ));
                     }
                 })
@@ -393,21 +413,21 @@
         });
         $.ajax({
             type: 'get',
-            url: '../getAllActiveSupplements',
+            url: url + '/getAllActiveSupplements',
             dataType: "json",
             success: function (data){
                 console.log('success /getAllActiveSupplements');
                 $("#supplement").append($("" +
-                    "<option data-value='" + JSON.stringify(null) + "'>Without supplement</option>"
+                    "<option value='" + null + "'>Without supplement</option>"
                 ));
                 data.forEach((supplement) =>{
                     if(JSON.stringify(supplement) === JSON.stringify(Order?.supplement?? null)) {
                         $("#supplement").append($("" +
-                            "<option data-value='" + JSON.stringify(supplement) + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                            "<option value='" + supplement.id + "' selected> " + supplement.name + " ("+ supplement.price  + ")</option>"
                         ));
                     } else {
                         $("#supplement").append($("" +
-                            "<option data-value='" + JSON.stringify(supplement) + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
+                            "<option value='" + supplement.id + "'> " + supplement.name + " ("+ supplement.price  + ")</option>"
                         ));
                     }
                 })
@@ -419,24 +439,24 @@
     }
 
     function updateSize(){
-        let sandwich = ($('#sandwich')).find(":selected").data("value");
+        let sandwichId = $('#sandwich').val();
         $.ajax({
             type: 'get',
-            url: '../getSandwichById',
-            data: {id: sandwich.id},
+            url: url + '/getSandwichById',
+            data: {id: sandwichId},
             dataType: "json",
             success: function (data){
                 console.log('success /getSandwichById');
                 $("#size").empty();
-                $("#size").append($("<option data-value='" + JSON.stringify(null) + "' disabled selected>Choose size</option>"));
+                $("#size").append($("<option value='" + null + "' disabled selected>Choose size</option>"));
                 data.sizes.forEach((size) =>{
                     if(JSON.stringify(size) === JSON.stringify(Order?.size?? null)){
                         $("#size").append($("" +
-                            "<option data-value='" + JSON.stringify(size) + "' selected> " + size.name + " (" + size.price + ")</option>"
+                            "<option value='" + size.id + "' selected> " + size.name + " (" + size.price + ")</option>"
                         ));
                     } else {
                         $("#size").append($("" +
-                            "<option data-value='" + JSON.stringify(size) + "'> " + size.name + " (" + size.price + ")</option>"
+                            "<option value='" + size.id + "'> " + size.name + " (" + size.price + ")</option>"
                         ));
                     }
                 })

@@ -73,4 +73,12 @@ public class UserService {
         return user;
     }
 
+    public boolean checkPhone(String phone) {
+        return phone.contains("_");
+    }
+
+    public boolean checkUnicPhone(String phone) {
+        User user = userRepository.findByPhone(phone);
+        return user != null;
+    }
 }

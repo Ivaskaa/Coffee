@@ -2,6 +2,7 @@ package com.example.Coffee.controllers;
 
 import com.example.Coffee.entities.Admin;
 import com.example.Coffee.entities.Education;
+import com.example.Coffee.entities.product.coffee.CoffeeDto;
 import com.example.Coffee.service.EducationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,14 +10,16 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -46,24 +49,40 @@ public class EducationController {
     @PostMapping("/addEducation")
     @ResponseBody
     public String addEducation(
-            @RequestParam("education") String educationJsonString,
-            MultipartFile file
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart("education") @Valid Education education,
+            BindingResult bindingResult
     ) throws IOException {
-        Education education = mapper.readValue(educationJsonString, Education.class);
+        if (file == null || file.isEmpty()){
+            bindingResult.addError(new FieldError("coffeeDto", "photo", "Must not be empty"));
+        }
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
         educationService.save(education, file);
-        return mapper.writeValueAsString("success");
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/updateEducation")
     @ResponseBody
     public String updateEducation(
-            @RequestParam("education") String educationJsonString,
-            MultipartFile file,
-            Long id
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart("education") @Valid Education education,
+            BindingResult bindingResult
     ) throws IOException {
-        Education education = mapper.readValue(educationJsonString, Education.class);
-        educationService.update(id, education, file);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        educationService.update(education.getId(), education, file);
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteEducationById")

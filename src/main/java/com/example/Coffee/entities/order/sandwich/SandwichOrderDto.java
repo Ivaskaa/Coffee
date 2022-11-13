@@ -1,37 +1,59 @@
 package com.example.Coffee.entities.order.sandwich;
 
+import com.example.Coffee.entities.ingredients.sauce.Sauce;
 import com.example.Coffee.entities.ingredients.sauce.SauceDto;
+import com.example.Coffee.entities.ingredients.supplement.Supplement;
 import com.example.Coffee.entities.ingredients.supplement.SupplementDto;
+import com.example.Coffee.entities.ingredients.syrup.Syrup;
+import com.example.Coffee.entities.order.dessert.DessertOrder;
 import com.example.Coffee.entities.order.sandwich.SandwichOrder;
+import com.example.Coffee.entities.product.dessert.Dessert;
+import com.example.Coffee.entities.product.dessert.DessertSize;
+import com.example.Coffee.entities.product.sandwich.Sandwich;
 import com.example.Coffee.entities.product.sandwich.SandwichDto;
 import com.example.Coffee.entities.product.sandwich.SandwichSize;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
+
 @Data
 public class SandwichOrderDto {
     private Long id;
-    private SandwichDto sandwich;
-    private SandwichSize size;
-    private SauceDto sauce;
-    private SupplementDto supplement;
+    @NotNull(message = "Must not be empty")
+    private Long sandwichId;
+    private Long sauceId;
+    private Long supplementId;
+    @NotNull(message = "Must not be empty")
+    private Long sizeId;
+    @NotNull(message = "Must not be empty")
     private Integer count;
     private boolean active;
 
     public final SandwichOrder build(){
-        SandwichOrder sandwichOrder = new SandwichOrder();
-        sandwichOrder.setId(this.id);
-        if(this.sandwich != null) {
-            sandwichOrder.setSandwich(this.sandwich.build());
+        SandwichOrder order = new SandwichOrder();
+        order.setId(id);
+        if(sandwichId != null){
+            Sandwich sandwich = new Sandwich();
+            sandwich.setId(sandwichId);
+            order.setSandwich(sandwich);
         }
-        sandwichOrder.setSize(this.size);
-        if(this.sauce != null) {
-            sandwichOrder.setSauce(this.sauce.build());
+        if(sauceId != null) {
+            Sauce sauce = new Sauce();
+            sauce.setId(sauceId);
+            order.setSauce(sauce);
         }
-        if(this.supplement != null) {
-            sandwichOrder.setSupplement(this.supplement.build());
+        if(supplementId != null) {
+            Supplement supplement = new Supplement();
+            supplement.setId(supplementId);
+            order.setSupplement(supplement);
         }
-        sandwichOrder.setCount(this.count);
-        sandwichOrder.setActive(this.active);
-        return sandwichOrder;
+        if(sizeId != null) {
+            SandwichSize size = new SandwichSize();
+            size.setId(sizeId);
+            order.setSize(size);
+        }
+        order.setCount(count);
+        order.setActive(active);
+        return order;
     }
 }

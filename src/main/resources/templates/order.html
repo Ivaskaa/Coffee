@@ -84,6 +84,10 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url' + url)
+
     let modal = document.getElementById("popup");
 
     let currentPage = 1;
@@ -151,7 +155,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getOrders',
+            url: url + '/getOrders',
             data: data,
             dataType: "json",
             success: function (data){
@@ -252,31 +256,31 @@
                 "<p>" + flat + "</p>" +
                 "</td>" +
                 "<td>" +
-                "<form method='get' action='/coffeeOrder' enctype=\"multipart/form-data\">" +
+                "<form method='get' action='" + url + "/coffeeOrder' enctype=\"multipart/form-data\">" +
                     "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
                 "</form>" +
                 "</td>" +
                 "<td>" +
-                "<form method='get' action='/teaOrder' enctype=\"multipart/form-data\">" +
+                "<form method='get' action='" + url + "/teaOrder' enctype=\"multipart/form-data\">" +
                     "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
                 "</form>" +
                 "</td>" +
                 "<td>" +
-                "<form method='get' action='/dessertOrder' enctype=\"multipart/form-data\">" +
+                "<form method='get' action='" + url + "/dessertOrder' enctype=\"multipart/form-data\">" +
                     "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
                 "</form>" +
                 "</td>" +
                 "<td>" +
-                "<form method='get' action='/sandwichOrder' enctype=\"multipart/form-data\">" +
+                "<form method='get' action='" + url + "/sandwichOrder' enctype=\"multipart/form-data\">" +
                     "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
                 "</form>" +
                 "</td>" +
                 "<td>" +
-                "<form method='get' action='/snackOrder' enctype=\"multipart/form-data\">" +
+                "<form method='get' action='" + url + "/snackOrder' enctype=\"multipart/form-data\">" +
                     "<input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "<button type=\"submit\" class=\"btn btn-info\" >Info</button>" +
                 "</form>" +
@@ -300,7 +304,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getOrderById',
+            url: url + '/getOrderById',
             data: data,
             dataType: "json",
             success: function (order){
@@ -373,7 +377,7 @@
                     "                   <div class='col'" +
                     "                       <div class=\"form-group mt-2\">\n" +
                     "                           <label>Coffees:</label>\n" +
-                    "                           <form method='get' action='/coffeeOrder' enctype=\"multipart/form-data\">" +
+                    "                           <form method='get' action='" + url + "/coffeeOrder' enctype=\"multipart/form-data\">" +
                     "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
                     "                           </form>" +
@@ -381,7 +385,7 @@
                     "                   <div class='col'" +
                     "                       <div class=\"form-group mt-2\">\n" +
                     "                           <label>Teas:</label>\n" +
-                    "                           <form method='get' action='/teaOrder' enctype=\"multipart/form-data\">" +
+                    "                           <form method='get' action='" + url + "/teaOrder' enctype=\"multipart/form-data\">" +
                     "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
                     "                           </form>" +
@@ -389,7 +393,7 @@
                     "                   <div class='col'" +
                     "                       <div class=\"form-group mt-2\">\n" +
                     "                           <label>Desserts:</label>\n" +
-                    "                           <form method='get' action='/dessertOrder' enctype=\"multipart/form-data\">" +
+                    "                           <form method='get' action='" + url + "/dessertOrder' enctype=\"multipart/form-data\">" +
                     "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
                     "                           </form>" +
@@ -397,7 +401,7 @@
                     "                   <div class='col'" +
                     "                       <div class=\"form-group mt-2\">\n" +
                     "                           <label>Sandwiches:</label>\n" +
-                    "                           <form method='get' action='/sandwichOrder' enctype=\"multipart/form-data\">" +
+                    "                           <form method='get' action='" + url + "/sandwichOrder' enctype=\"multipart/form-data\">" +
                     "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
                     "                           </form>" +
@@ -405,7 +409,7 @@
                     "                   <div class='col'" +
                     "                       <div class=\"form-group mt-2\">\n" +
                     "                           <label>Snacks:</label>\n" +
-                    "                           <form method='get' action='/snackOrder' enctype=\"multipart/form-data\">" +
+                    "                           <form method='get' action='" + url + "/snackOrder' enctype=\"multipart/form-data\">" +
                     "                               <input type='number' value='" + order.id + "' name='orderId' style='display: none'>"+
                     "                               <button type=\"submit\" class=\"btn btn-info\">Info</button>" +
                     "                           </form>" +
@@ -436,7 +440,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteOrderById',
+            url: url + '/deleteOrderById',
             data: data,
             dataType: "json",
             success: function (success){

@@ -2,6 +2,8 @@ package com.example.Coffee.controllers.ingredients;
 
 import com.example.Coffee.entities.Admin;
 import com.example.Coffee.entities.ingredients.alcohol.Alcohol;
+import com.example.Coffee.entities.ingredients.alcohol.AlcoholDto;
+import com.example.Coffee.entities.product.dessert.DessertDto;
 import com.example.Coffee.service.ingredient.AlcoholService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,11 +11,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -49,19 +54,35 @@ public class AlcoholController {
     @PostMapping("/addAlcohol")
     @ResponseBody
     public String addAlcohol(
-            Alcohol alcohol
+            @RequestBody @Valid AlcoholDto alcoholDto,
+            BindingResult bindingResult
     ) throws IOException {
-        alcoholService.save(alcohol);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        alcoholService.save(alcoholDto.build());
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/updateAlcohol")
     @ResponseBody
     public String updateAlcohol(
-            Alcohol alcohol
+            @RequestBody @Valid AlcoholDto alcoholDto,
+            BindingResult bindingResult
     ) throws IOException {
-        alcoholService.update(alcohol.getId(), alcohol);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        alcoholService.update(alcoholDto.getId(), alcoholDto.build());
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteAlcoholById")

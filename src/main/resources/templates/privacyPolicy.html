@@ -36,25 +36,33 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context2 = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context2;
+    console.log('url: ' + url)
+
     $(document).ready(function() {
         updatePage();
     });
 
     function save(){
         let text = document.getElementById('text');
-        if(validationInputTextEmpty(text)){
-            return false;
-        }
         let data = {
             text: text.value
         }
         $.ajax({
             type: 'post',
-            url: '../updatePrivacyPolicy',
-            data: data,
-            dataType: "json",
-            success: function (success) {
-                console.log(success + ' /updatePrivacyPolicy');
+            url: url + '/updatePrivacyPolicy',
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8",
+            success: function (data) {
+                console.log('success /updatePrivacyPolicy');
+                let validation = JSON.parse(data);
+                if (validation == null) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                } else {
+                    validationMessage(validation);
+                }
             },
             error: function () {
                 console.log('error /updatePrivacyPolicy');
@@ -62,10 +70,20 @@
         });
     }
 
+    function validationMessage(validation){
+        if(validation?.text ?? false){
+            document.getElementById('textMessage').innerHTML = validation.text;
+            document.getElementById('text').style.border = "1px solid red";
+        }else {
+            document.getElementById('textMessage').innerHTML = "";
+            document.getElementById('text').style.border = "1px solid green";
+        }
+    }
+
     function updatePage(){
         $.ajax({
             type: 'get',
-            url: '../getPrivacyPolicy',
+            url: url + '/getPrivacyPolicy',
             dataType: "json",
             success: function (data){
                 $("#content").empty();
@@ -74,6 +92,7 @@
                     "   <label>Text:</label>" +
                     "   <textarea style='height: 350px' placeholder='Enter privacy policies text' id='text' " +
                     "       class='form-control' maxlength=\"5000\">" + data.text + "</textarea>" +
+                    "   <p id='textMessage' style=\"color: red\"></p>" +
                     "</div>" +
                     "<button onclick='save()' type='button' class='btn btn-success mt-2'>Save</button>"
                 ));

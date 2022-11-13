@@ -1,7 +1,9 @@
 package com.example.Coffee.controllers.ingredients;
 
 import com.example.Coffee.entities.Admin;
+import com.example.Coffee.entities.ingredients.alcohol.AlcoholDto;
 import com.example.Coffee.entities.ingredients.syrup.Syrup;
+import com.example.Coffee.entities.ingredients.syrup.SyrupDto;
 import com.example.Coffee.service.ingredient.SyrupService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,11 +11,17 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.validation.Valid;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -49,19 +57,35 @@ public class SyrupController {
     @PostMapping("/addSyrup")
     @ResponseBody
     public String addSyrup(
-            Syrup syrup
+            @RequestBody @Valid SyrupDto syrupDto,
+            BindingResult bindingResult
     ) throws IOException {
-        syrupService.save(syrup);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        syrupService.save(syrupDto.build());
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/updateSyrup")
     @ResponseBody
     public String updateSyrup(
-            Syrup syrup
+            @RequestBody @Valid SyrupDto syrupDto,
+            BindingResult bindingResult
     ) throws IOException {
-        syrupService.update(syrup.getId(), syrup);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        syrupService.update(syrupDto.getId(), syrupDto.build());
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteSyrupById")

@@ -3,6 +3,7 @@ package com.example.Coffee.controllers;
 import com.example.Coffee.entities.Admin;
 import com.example.Coffee.entities.city.City;
 import com.example.Coffee.entities.city.CityDto;
+import com.example.Coffee.entities.ingredients.supplement.SupplementDto;
 import com.example.Coffee.service.CityService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,11 +11,17 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.validation.Valid;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -44,19 +51,35 @@ public class CityController {
     @PostMapping("/addCity")
     @ResponseBody
     public String addCity(
-            CityDto cityDto
+            @RequestBody @Valid CityDto cityDto,
+            BindingResult bindingResult
     ) throws IOException {
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
         cityService.save(cityDto.build());
-        return mapper.writeValueAsString("success");
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/updateCity")
     @ResponseBody
     public String updateCity(
-            CityDto cityDto
+            @RequestBody @Valid CityDto cityDto,
+            BindingResult bindingResult
     ) throws IOException {
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
         cityService.update(cityDto.getId(), cityDto.build());
-        return mapper.writeValueAsString("success");
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteCityById")

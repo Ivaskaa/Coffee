@@ -61,6 +61,10 @@
 <script src="https://unpkg.com/imask"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url: ' + url)
+
     let modal = document.getElementById("popup");
 
     let currentPage = 1;
@@ -85,25 +89,30 @@
             "                   <label>Name:</label>\n" +
             "                   <input id=\"name\" type=\"text\" maxlength=\"100\" name=\"name\"\n" +
             "                           placeholder=\"Enter username\" class=\"form-control\">\n" +
+            "                    <p id='nameMessage' style=\"color: red\"></p>" +
             "               </div>\n" +
             "               <div class=\"form-group mt-2\">\n" +
             "                   <label>Phone:</label>\n" +
             "                   <input id=\"phone\" type=\"text\" name=\"phone\"\n" +
             "                           placeholder=\"Enter phone\" class=\"form-control\">\n" +
+            "                    <p id='phoneMessage' style=\"color: red\"></p>" +
             "               </div>\n" +
             "               <div class=\"form-group mt-2\">\n" +
             "                   <label>Password:</label>\n" +
             "                   <input id=\"password\" type=\"text\" maxlength=\"10\" name=\"password\"\n" +
             "                           placeholder=\"Enter password if you want to change him\" class=\"form-control\">\n" +
+            "                    <p id='passwordMessage' style=\"color: red\"></p>" +
             "               </div>\n" +
             "               <div class=\"form-group mt-2\">\n" +
             "                   <label>Location:</label>\n" +
             "                   <select id='location' name='location' class='form-control'>" +
             "                   </select>" +
+            "                    <p id='locationMessage' style=\"color: red\"></p>" +
             "               </div>\n" +
             "               <div class=\"form-group mt-2\">\n" +
             "                   <label>Birthday:</label>\n" +
             "                   <input id='birthday' type='date' class='form-control' name='birthday' placeholder='Choose birthday'>\n" +
+            "                    <p id='birthdayMessage' style=\"color: red\"></p>" +
             "               </div>" +
             "               <div class=\"d-flex flex-nowrap mt-2\">\n" +
             "                   <label class=\"m-1\">Active:</label>\n" +
@@ -132,45 +141,76 @@
     function save(style){
         let user = {}
         let name = document.getElementById('name');
-        if(validationInputTextEmpty(name)){
-            return false;
-        }
         let phone = document.getElementById('phone');
-        if (validationInputCheckUniquePhone(phone)){
-            return false;
-        }
-        if (validationInputTextEmpty(phone)) {
-            return false;
-        }
-        if (validationInputTextPhoneMask(phone)) {
-            return false;
-        }
         let password = document.getElementById('password');
-        let location = ($('#location')).find(":selected").data("value");
+        let location = $('#location').val();
         let birthday = document.getElementById('birthday');
         let active = document.getElementById('active');
         user.name = name.value;
         user.phone = phone.value;
         user.password = password.value;
-        user.location = location;
+        user.locationId = location;
         user.birthday = birthday.value;
         user.active = active.checked;
         user.id = IdForUpdating;
         console.log(user);
         $.ajax({
             type: 'post',
-            url: '../updateUser',
+            url: url + '/updateUser',
             data: JSON.stringify(user),
             contentType: "application/json; charset=utf-8",
-            success: function (success) {
-                updatePage(currentPage, sortingField, sortingDirection)
-                closePopup();
-                console.log(success + ' /updateUser');
+            success: function (data) {
+                console.log('success /updateUser');
+                let validation = JSON.parse(data);
+                if (validation == null) {
+                    updatePage(currentPage, sortingField, sortingDirection)
+                    closePopup();
+                } else {
+                    validationMessage(validation);
+                }
             },
             error: function () {
                 console.log('error /updateUser');
             }
         });
+    }
+
+    function validationMessage(validation){
+        if(validation?.name ?? false){
+            document.getElementById('nameMessage').innerHTML = validation.name;
+            document.getElementById('name').style.border = "1px solid red";
+        }else {
+            document.getElementById('nameMessage').innerHTML = "";
+            document.getElementById('name').style.border = "1px solid green";
+        }
+        if(validation?.phone ?? false){
+            document.getElementById('phoneMessage').innerHTML = validation.phone;
+            document.getElementById('phone').style.border = "1px solid red";
+        }else {
+            document.getElementById('phoneMessage').innerHTML = "";
+            document.getElementById('phone').style.border = "1px solid green";
+        }
+        if(validation?.password ?? false){
+            document.getElementById('passwordMessage').innerHTML = validation.password;
+            document.getElementById('password').style.border = "1px solid red";
+        }else {
+            document.getElementById('passwordMessage').innerHTML = "";
+            document.getElementById('password').style.border = "1px solid green";
+        }
+        if(validation?.location ?? false){
+            document.getElementById('locationMessage').innerHTML = validation.location;
+            document.getElementById('location').style.border = "1px solid red";
+        }else {
+            document.getElementById('locationMessage').innerHTML = "";
+            document.getElementById('location').style.border = "1px solid green";
+        }
+        if(validation?.birthday ?? false){
+            document.getElementById('birthdayMessage').innerHTML = validation.birthday;
+            document.getElementById('birthday').style.border = "1px solid red";
+        }else {
+            document.getElementById('birthdayMessage').innerHTML = "";
+            document.getElementById('birthday').style.border = "1px solid green";
+        }
     }
 
     function sort(field){
@@ -191,7 +231,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getUsers',
+            url: url + '/getUsers',
             data: data,
             dataType: "json",
             success: function (data){
@@ -256,7 +296,7 @@
         let data = { id: id };
         $.ajax({
             type: 'get',
-            url: '../getUserById',
+            url: url + '/getUserById',
             data: data,
             dataType: "json",
             success: function (user){
@@ -282,7 +322,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteUserById',
+            url: url + '/deleteUserById',
             data: data,
             dataType: "json",
             success: function (success){
@@ -298,22 +338,22 @@
     function uploadSelect() {
         $.ajax({
             type: 'get',
-            url: '../getAllActiveLocations',
+            url: url + '/getAllActiveLocations',
             dataType: "json",
             success: function (data) {
                 console.log('success /getAllActiveLocations');
                 $("#location").append($("" +
-                    "<option data-value='" + null + "' selected disabled>Choose location</option>" +
-                    "<option data-value='" + null + "'>Without location</option>"
+                    "<option value='" + null + "' selected disabled>Choose location</option>" +
+                    "<option value='" + null + "'>Without location</option>"
                 ));
                 data.forEach((location) => {
                     if (JSON.stringify(location) === JSON.stringify(User?.location ?? null)) {
                         $("#location").append($("" +
-                            "<option data-value='" + JSON.stringify(location) + "' selected> " + location.name + "</option>"
+                            "<option value='" + location.id + "' selected> " + location.name + "</option>"
                         ));
                     } else {
                         $("#location").append($("" +
-                            "<option data-value='" + JSON.stringify(location) + "'> " + location.name + "</option>"
+                            "<option value='" + location.id + "'> " + location.name + "</option>"
                         ));
                     }
                     // "<option value='" + coffee + "'> " + coffee.name + " " + coffee.sizes.forEach((size) => {size.name}) + "</option>"

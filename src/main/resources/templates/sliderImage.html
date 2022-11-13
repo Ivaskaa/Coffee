@@ -54,7 +54,11 @@
 <script>
 
     let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
-    let url =window.location.protocol+"//"+ window.location.host +context+"/img/sliderImage/";
+    let imageUrl =window.location.protocol+"//"+ window.location.host +context+"/img/sliderImage/";
+
+    let context2 = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context2;
+    console.log('url: ' + url)
 
     $(document).ready(function() {
         updatePage();
@@ -69,7 +73,7 @@
         formData.append('file', file.files[0]);
         $.ajax({
             type: 'post',
-            url: '../addSliderImage',
+            url: url + '/addSliderImage',
             contentType: false,
             processData: false,
             data: formData,
@@ -88,7 +92,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteSliderImageById',
+            url: url + '/deleteSliderImageById',
             data: data,
             dataType: "json",
             success: function (success){
@@ -105,7 +109,7 @@
         console.log('hello1');
         $.ajax({
             type: 'get',
-            url: '../getSliderImages',
+            url: url + '/getSliderImages',
             dataType: "json",
             success: function (data){
                 console.log('success /getSliderImages');
@@ -119,7 +123,7 @@
                         "   <p>" + image.id + "</p>" +
                         "</td>" +
                         "<td>" +
-                        "   <img style='height: 100px' src='" + url + image.image + "'>" +
+                        "   <img style='height: 100px' src='" + imageUrl + image.image + "'>" +
                         "</td>" +
                         "<td>" +
                         "   <button onclick='deleteObject(" + image.id + ")' class=\"btn btn-danger\" type=\"button\">Delete</button>" +

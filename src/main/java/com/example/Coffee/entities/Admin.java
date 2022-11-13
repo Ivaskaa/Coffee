@@ -8,6 +8,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -23,7 +25,10 @@ public class Admin implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @NotEmpty(message = "Must not be empty")
+    @Size(max = 255, message = "Must be less than 255 characters")
     private String username;
+    @Size(max = 255, message = "Must be less than 255 characters")
     private String password;
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.MERGE)
     @JoinTable(
@@ -33,7 +38,8 @@ public class Admin implements UserDetails {
     )
     @JsonManagedReference
     private Set<Role> adminRoles;
-
+    @NotEmpty(message = "Must not be empty")
+    @Size(max = 255, message = "Must be less than 255 characters")
     private String registrationDate;
 
     private boolean active;

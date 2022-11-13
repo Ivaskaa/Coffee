@@ -16,7 +16,17 @@
 #          sudo /etc/init.d/mysql start
 #          mysql -e 'CREATE DATABASE coffee;' -u Ivaska -ppassword
 
-name: Java CI with Maven
+#name: Java CI with Maven
+#on:
+#  pull_request:
+#    branches:
+#      - '*'
+#  push:
+#    branches:
+#      - 'master'
+
+name: Name
+
 on: push
 
 jobs:
@@ -24,9 +34,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Build with Maven
-        run: mvn clean install -DskipTests=true
-
+      - name: set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.11
+      - name: Maven Package
+        run: mvn -B clean package -DskipTests
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Deploy
+        uses: aptible/aptible-deploy-action@v1
+        with:
+          username: ${{ secrets.APTIBLE_USERNAME }}
+          password: ${{ secrets.APTIBLE_PASSWORD }}
+          environment: ${{ env.APTIBLE_ENVIRONMENT }}
+          app: ${{ env.APTIBLE_APP }}
+          docker_img: ${{ env.IMAGE_NAME }}
+          private_registry_username: ${{ secrets.DOCKERHUB_USERNAME }}
+          private_registry_password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
 

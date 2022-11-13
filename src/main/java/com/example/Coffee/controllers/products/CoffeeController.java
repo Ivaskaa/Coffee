@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -58,6 +59,9 @@ public class CoffeeController {
             BindingResult bindingResult
     ) throws IOException {
         //validation
+        if (file == null || file.isEmpty()){
+            bindingResult.addError(new FieldError("coffeeDto", "photo", "Must not be empty"));
+        }
         if(bindingResult.hasErrors()){
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {
@@ -69,27 +73,22 @@ public class CoffeeController {
         return mapper.writeValueAsString(null);
     }
 
-//    @PostMapping("/addCoffee")
-//    @ResponseBody
-//    public String addCoffee(
-//            @RequestParam("coffee") String coffeeJsonString,
-//            MultipartFile file
-//    ) throws IOException {
-//        CoffeeDto coffeeDto = mapper.readValue(coffeeJsonString, CoffeeDto.class);
-//        coffeeService.save(coffeeDto.build(), file);
-//        return mapper.writeValueAsString("success");
-//    }
-
     @PostMapping("/updateCoffee")
     @ResponseBody
     public String updateCoffee(
-            @RequestParam("coffee") String coffeeJsonString,
-            MultipartFile file,
-            Long id
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart("coffee") @Valid CoffeeDto coffeeDto,
+            BindingResult bindingResult
     ) throws IOException {
-        CoffeeDto coffeeDto = mapper.readValue(coffeeJsonString, CoffeeDto.class);
-        coffeeService.update(id, coffeeDto.build(), file);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        coffeeService.update(coffeeDto.getId(), coffeeDto.build(), file);
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteCoffeeById")

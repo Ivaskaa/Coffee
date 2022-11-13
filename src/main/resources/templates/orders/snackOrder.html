@@ -59,6 +59,10 @@
 <script th:src="@{/js/validation.js}"></script>
 
 <script>
+    let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
+    let url = window.location.protocol+"//"+ window.location.host + context;
+    console.log('url: ' + url)
+    
     let orderId = "[[${orderId}]]";
 
     let currentPage = 1;
@@ -90,7 +94,7 @@
         }
         $.ajax({
             type: 'get',
-            url: '../getSnackOrders',
+            url: url + '/getSnackOrders',
             data: data,
             dataType: "json",
             success: function (data){
@@ -153,7 +157,7 @@
         let data = { id: id };
         $.ajax({
             type: 'post',
-            url: '../deleteSnackOrderById',
+            url: url + '/deleteSnackOrderById',
             data: data,
             dataType: "json",
             success: function (success){

@@ -1,6 +1,7 @@
 package com.example.Coffee.controllers;
 
 import com.example.Coffee.entities.Admin;
+import com.example.Coffee.entities.AdminDto;
 import com.example.Coffee.service.AdminService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,12 +9,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -44,19 +47,53 @@ public class AdminController {
     @PostMapping("/addAdmin")
     @ResponseBody
     public String addAlcohol(
-            Admin admin
+            @Valid @RequestBody AdminDto adminDto,
+            BindingResult bindingResult
     ) throws IOException {
-        adminService.saveAdmin(admin);
-        return mapper.writeValueAsString("success");
+        System.out.println("hello");
+        //validation
+        if(adminService.findUserByUsername(adminDto.getUsername()) != null){
+            bindingResult.addError(new FieldError("admin", "username", "This username is already exist"));
+        }
+        if(adminDto.getPassword() == null || adminDto.getPassword().equals("")){
+            bindingResult.addError(new FieldError("admin", "password", "Must not be empty"));
+        }
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            System.out.println(errors);
+            return mapper.writeValueAsString(errors);
+        }
+        //action
+        adminService.saveAdmin(adminDto.build());
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/updateAdmin")
     @ResponseBody
     public String updateAdmin(
-            Admin admin
+            @Valid @RequestBody AdminDto adminDto,
+            BindingResult bindingResult
     ) throws IOException {
-        adminService.updateAdmin(admin.getId(), admin);
-        return mapper.writeValueAsString("success");
+        //validation
+        Admin adminFromDb = adminService.findById(adminDto.getId());
+        if (!adminFromDb.getUsername().equals(adminDto.getUsername())){
+            if(adminService.loadUserByUsername(adminDto.getUsername()) != null){
+                bindingResult.addError(new FieldError("admin", "username", "This username is already exist"));
+            }
+        }
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        //action
+        adminService.updateAdmin(adminDto.getId(), adminDto.build());
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteAdminById")

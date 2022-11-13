@@ -1,6 +1,7 @@
 package com.example.Coffee.controllers.products;
 
 import com.example.Coffee.entities.Admin;
+import com.example.Coffee.entities.product.coffee.CoffeeDto;
 import com.example.Coffee.entities.product.sandwich.Sandwich;
 import com.example.Coffee.entities.product.sandwich.SandwichDto;
 import com.example.Coffee.service.product.SandwichService;
@@ -10,14 +11,16 @@ import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @AllArgsConstructor
@@ -53,24 +56,41 @@ public class SandwichController {
     @PostMapping("/addSandwich")
     @ResponseBody
     public String addSandwich(
-            @RequestParam("sandwich") String sandwichJsonString,
-            MultipartFile file
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart("sandwich") @Valid SandwichDto sandwichDto,
+            BindingResult bindingResult
     ) throws IOException {
-        SandwichDto sandwichDto = mapper.readValue(sandwichJsonString, SandwichDto.class);
+        //validation
+        if (file == null || file.isEmpty()){
+            bindingResult.addError(new FieldError("sandwichDto", "photo", "Must not be empty"));
+        }
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
         sandwichService.save(sandwichDto.build(), file);
-        return mapper.writeValueAsString("success");
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/updateSandwich")
     @ResponseBody
     public String updateSandwich(
-            @RequestParam("sandwich") String sandwichJsonString,
-            MultipartFile file,
-            Long id
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestPart("sandwich") @Valid SandwichDto sandwichDto,
+            BindingResult bindingResult
     ) throws IOException {
-        SandwichDto sandwichDto = mapper.readValue(sandwichJsonString, SandwichDto.class);
-        sandwichService.update(id, sandwichDto.build(), file);
-        return mapper.writeValueAsString("success");
+        if(bindingResult.hasErrors()){
+            Map<String, String> errors = new HashMap<>();
+            for (FieldError error : bindingResult.getFieldErrors()) {
+                errors.put(error.getField(), error.getDefaultMessage());
+            }
+            return mapper.writeValueAsString(errors);
+        }
+        sandwichService.update(sandwichDto.getId(), sandwichDto.build(), file);
+        return mapper.writeValueAsString(null);
     }
 
     @PostMapping("/deleteSandwichById")
