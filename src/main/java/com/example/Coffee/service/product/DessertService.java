@@ -1,6 +1,9 @@
 package com.example.Coffee.service.product;
 
+import com.example.Coffee.entities.product.coffee.CoffeeSize;
 import com.example.Coffee.entities.product.dessert.Dessert;
+import com.example.Coffee.entities.product.dessert.DessertDto;
+import com.example.Coffee.entities.product.dessert.DessertSize;
 import com.example.Coffee.repository.product.DessertRepository;
 import com.example.Coffee.service.StaticService;
 import lombok.AllArgsConstructor;
@@ -11,7 +14,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.multipart.MultipartFile;
+import org.thymeleaf.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,9 +31,14 @@ public class DessertService {
     private final DessertRepository dessertRepository;
     private final StaticService service;
 
-    public List<Dessert> findAllActive(){
-        log.info("get all desserts");
-        List<Dessert> desserts = dessertRepository.findAllActive();
+    public List<Dessert> findAllActive(Long id){
+        log.info("get all active desserts");
+        List<Dessert> desserts;
+        if(id == null){
+            desserts = dessertRepository.findAllByActiveTrue();
+        } else {
+            desserts = dessertRepository.findAllByActiveTrueOrId(id);
+        }
         log.info("success");
         return desserts;
     }
@@ -61,21 +72,17 @@ public class DessertService {
         if(file != null && !file.getOriginalFilename().isEmpty()) {
             service.deletePhoto("dessert", dessert.getPhoto());
             fileName = (UUID.randomUUID() + "." + file.getOriginalFilename());
-            dessert.setPhoto(fileName);
+            dessertForm.setPhoto(fileName);
             service.savePhoto("dessert", file, fileName);
         }
-        dessert.setName(dessertForm.getName());
-        dessert.setDescription(dessertForm.getDescription());
-        dessert.setActive(dessertForm.isActive());
-        if(dessert.getSizes() != null) {
-            if (!dessert.getSizes().isEmpty()) {
-                dessert.getSizes().clear();
-            }
-            dessert.getSizes().addAll(dessertForm.getSizes());
+        for(DessertSize dessertSize : dessertForm.getSizes()){
+            dessertSize.setDessert(dessert);
         }
-        dessertRepository.save(dessert);
+        dessertForm.setDessertOrders(dessert.getDessertOrders());
+
+        dessertRepository.save(dessertForm);
         log.info("success");
-        return dessert;
+        return dessertForm;
     }
 
     public void deleteById(Long id) throws FileNotFoundException {
@@ -91,5 +98,45 @@ public class DessertService {
         Dessert dessert = dessertRepository.findById(id).orElseThrow();
         log.info("success");
         return dessert;
+    }
+
+    public void dessertSizesValidation(DessertDto dessertDto, BindingResult bindingResult) {
+        if(dessertDto.getSizes() != null){
+            if(!dessertDto.getSizes().isEmpty()){
+                dessertDto.getSizes().sort((object1, object2) -> object1.getNumber().compareTo(object2.getNumber()));
+                int i = 1;
+                for(DessertSize size: dessertDto.getSizes()){
+                    for(DessertSize size2: dessertDto.getSizes()){
+                        if(!size.getNumber().equals(size2.getNumber())){
+                            if(size.getName().equals(size2.getName())){
+                                bindingResult.addError(new FieldError("dessertDto", "sizeName" + i, "Must be unique for this product"));
+                            }
+                        }
+                    }
+                    if(!size.getName().equals("XS") &&
+                            !size.getName().equals("S") &&
+                            !size.getName().equals("M") &&
+                            !size.getName().equals("L") &&
+                            !size.getName().equals("XL")){
+                        bindingResult.addError(new FieldError("dessertDto", "sizeName" + i, "Must be (XS,S,M,L or XL)"));
+                    }
+                    if(StringUtils.isEmptyOrWhitespace(size.getName())){
+                        bindingResult.addError(new FieldError("dessertDto", "sizeName" + i, "Must not be empty"));
+                    }
+                    if(StringUtils.isEmptyOrWhitespace(size.getDescription())){
+                        bindingResult.addError(new FieldError("dessertDto", "sizeDescription" + i, "Must not be empty"));
+                    }
+                    if(size.getPrice() == null){
+                        bindingResult.addError(new FieldError("dessertDto", "sizePrice" + i, "Must be number"));
+                    }
+                    if(size.getPrice() != null) {
+                        if (size.getPrice() <= 0) {
+                            bindingResult.addError(new FieldError("dessertDto", "sizePrice" + i, "Must be greater than 0"));
+                        }
+                    }
+                    i++;
+                }
+            }
+        }
     }
 }

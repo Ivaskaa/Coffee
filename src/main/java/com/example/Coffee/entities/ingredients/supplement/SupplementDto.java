@@ -6,18 +6,20 @@ import lombok.Data;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
+import java.math.BigDecimal;
 
 @Data
 public class SupplementDto {
     private Long id;
-    @NotEmpty(message = "Must not be empty")
+    @NotBlank(message = "Must not be empty")
     @Size(max = 255, message = "Must be less than 255 characters")
+    @Pattern(regexp = ".*[a-zA-Z]{3,}.*", message = "Must contain 3 letters")
     private String name;
-    @NotNull(message = "Must be valid")
-    private Double price;
+    @NotNull(message = "Must not be empty")
+    @DecimalMin(value = "0.01", message = "Must be greater then 0.01")
+    @DecimalMax(value = "1000.0", message = "Must be less then 1000")
+    private BigDecimal price;
     private boolean active;
 
     public final Supplement build(){

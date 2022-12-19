@@ -39,8 +39,8 @@ public class SandwichController {
 
     @GetMapping("/getAllActiveSandwiches")
     @ResponseBody
-    public String getAllActiveSandwiches() throws JsonProcessingException {
-        return mapper.writeValueAsString(sandwichService.findAllActive());
+    public String getAllActiveSandwiches(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(sandwichService.findAllActive(id));
     }
 
     @GetMapping("/getSandwiches")
@@ -61,6 +61,7 @@ public class SandwichController {
             BindingResult bindingResult
     ) throws IOException {
         //validation
+        sandwichService.sandwichSizesValidation(sandwichDto, bindingResult);
         if (file == null || file.isEmpty()){
             bindingResult.addError(new FieldError("sandwichDto", "photo", "Must not be empty"));
         }
@@ -82,6 +83,7 @@ public class SandwichController {
             @RequestPart("sandwich") @Valid SandwichDto sandwichDto,
             BindingResult bindingResult
     ) throws IOException {
+        sandwichService.sandwichSizesValidation(sandwichDto, bindingResult);
         if(bindingResult.hasErrors()){
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {

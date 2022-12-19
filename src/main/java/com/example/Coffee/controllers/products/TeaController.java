@@ -39,8 +39,8 @@ public class TeaController {
 
     @GetMapping("/getAllActiveTeas")
     @ResponseBody
-    public String getAllActiveTeas() throws JsonProcessingException {
-        return mapper.writeValueAsString(teaService.findAllActive());
+    public String getAllActiveTeas(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(teaService.findAllActive(id));
     }
 
     @GetMapping("/getTeas")
@@ -61,6 +61,7 @@ public class TeaController {
             BindingResult bindingResult
     ) throws IOException {
         //validation
+        teaService.teaSizesValidation(teaDto, bindingResult);
         if (file == null || file.isEmpty()){
             bindingResult.addError(new FieldError("coffeeDto", "photo", "Must not be empty"));
         }
@@ -82,6 +83,7 @@ public class TeaController {
             @RequestPart("tea") @Valid TeaDto teaDto,
             BindingResult bindingResult
     ) throws IOException {
+        teaService.teaSizesValidation(teaDto, bindingResult);
         if(bindingResult.hasErrors()){
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {

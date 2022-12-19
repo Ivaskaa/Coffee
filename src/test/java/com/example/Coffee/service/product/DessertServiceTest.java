@@ -35,8 +35,8 @@ class DessertServiceTest {
 
     @Test
     void findAllActive() {
-        dessertService.findAllActive();
-        Mockito.verify(dessertRepository, Mockito.times(1)).findAllActive();
+        dessertService.findAllActive(1L);
+        Mockito.verify(dessertRepository, Mockito.times(1)).findAllByActiveTrueOrId(1L);
     }
 
     @Test

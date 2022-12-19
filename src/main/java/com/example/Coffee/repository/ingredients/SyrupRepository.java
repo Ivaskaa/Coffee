@@ -17,4 +17,8 @@ public interface SyrupRepository extends JpaRepository<Syrup, Long> {
 
     @Query("SELECT count(s) FROM Syrup s WHERE s.active = true")
     Integer findCount();
+
+    List<Syrup> findAllByActiveTrue();
+
+    List<Syrup> findAllByActiveTrueOrId(Long id);
 }

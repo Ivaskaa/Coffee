@@ -37,8 +37,8 @@ public class AlcoholController {
 
     @GetMapping("/getAllActiveAlcohols")
     @ResponseBody
-    public String getAllActiveAlcohols() throws JsonProcessingException {
-        return mapper.writeValueAsString(alcoholService.findAllActive());
+    public String getAllActiveAlcohols(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(alcoholService.findAllActive(id));
     }
 
     @GetMapping("/getAlcohols")

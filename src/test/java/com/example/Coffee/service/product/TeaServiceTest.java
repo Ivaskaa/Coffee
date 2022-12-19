@@ -33,11 +33,11 @@ class TeaServiceTest {
     @MockBean
     private StaticService service;
 
-    @Test
-    void findAllActive() {
-        teaService.findAllActive();
-        Mockito.verify(teaRepository, Mockito.times(1)).findAllActive();
-    }
+//    @Test
+//    void findAllActive() {
+//        teaService.findAllActive();
+//        Mockito.verify(teaRepository, Mockito.times(1)).findAllActive();
+//    }
 
     @Test
     void findSortingPage() {

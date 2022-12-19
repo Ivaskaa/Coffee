@@ -1,5 +1,6 @@
 package com.example.Coffee.service.ingredient;
 
+import com.example.Coffee.entities.ingredients.sauce.Sauce;
 import com.example.Coffee.entities.ingredients.supplement.Supplement;
 import com.example.Coffee.repository.ingredients.SupplementRepository;
 import lombok.AllArgsConstructor;
@@ -19,11 +20,16 @@ import java.util.List;
 public class SupplementService {
     private final SupplementRepository supplementRepository;
 
-    public List<Supplement> findAllActive() {
-        log.info("get all supplements");
-        List<Supplement> supplements = supplementRepository.findAllActive();
+    public List<Supplement> findAllActive(Long id) {
+        log.info("get all active supplements");
+        List<Supplement> objects;
+        if(id == null){
+            objects = supplementRepository.findAllByActiveTrue();
+        } else {
+            objects = supplementRepository.findAllByActiveTrueOrId(id);
+        }
         log.info("success");
-        return supplements;
+        return objects;
     }
 
     public Page<Supplement> findSortingPage(Integer currentPage, String sortingField, String sortingDirection) {

@@ -17,4 +17,8 @@ public interface SauceRepository extends JpaRepository<Sauce, Long> {
 
     @Query("SELECT count(s) FROM Sauce s WHERE s.active = true")
     Integer findCount();
+
+    List<Sauce> findAllByActiveTrue();
+
+    List<Sauce> findAllByActiveTrueOrId(Long id);
 }

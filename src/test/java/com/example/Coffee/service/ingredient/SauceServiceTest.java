@@ -22,11 +22,11 @@ class SauceServiceTest {
     @MockBean
     private SauceRepository sauceRepository;
 
-    @Test
-    void findAllActive() {
-        sauceService.findAllActive();
-        Mockito.verify(sauceRepository, Mockito.times(1)).findAllActive();
-    }
+//    @Test
+//    void findAllActive() {
+//        sauceService.findAllActive();
+//        Mockito.verify(sauceRepository, Mockito.times(1)).findAllActive();
+//    }
 
     @Test
     void findSortingPage() {

@@ -11,8 +11,8 @@ import com.example.Coffee.entities.product.snack.SnackSize;
 import com.example.Coffee.entities.product.tea.Tea;
 import com.example.Coffee.entities.product.tea.TeaSize;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProductFactory {
     public Coffee getCoffee(){
@@ -24,12 +24,12 @@ public class ProductFactory {
         product.setActive(true);
         return product;
     }
-    private Set<CoffeeSize> getCoffeeSizes(){
+    private List<CoffeeSize> getCoffeeSizes(){
         CoffeeSize size = new CoffeeSize();
         size.setName("name");
         size.setDescription("desc");
         size.setPrice(1d);
-        Set<CoffeeSize> sizes = new HashSet<>();
+        List<CoffeeSize> sizes = new ArrayList<>();
         sizes.add(size);
         return sizes;
     }
@@ -43,12 +43,12 @@ public class ProductFactory {
         product.setActive(true);
         return product;
     }
-    private Set<DessertSize> getDessertSizes(){
+    private List<DessertSize> getDessertSizes(){
         DessertSize size = new DessertSize();
         size.setName("name");
         size.setDescription("desc");
         size.setPrice(1d);
-        Set<DessertSize> sizes = new HashSet<>();
+        List<DessertSize> sizes = new ArrayList<>();
         sizes.add(size);
         return sizes;
     }
@@ -62,12 +62,12 @@ public class ProductFactory {
         product.setActive(true);
         return product;
     }
-    private Set<SandwichSize> getSandwichSizes(){
+    private List<SandwichSize> getSandwichSizes(){
         SandwichSize size = new SandwichSize();
         size.setName("name");
         size.setDescription("desc");
         size.setPrice(1d);
-        Set<SandwichSize> sizes = new HashSet<>();
+        List<SandwichSize> sizes = new ArrayList<>();
         sizes.add(size);
         return sizes;
     }
@@ -81,12 +81,12 @@ public class ProductFactory {
         product.setActive(true);
         return product;
     }
-    private Set<SnackSize> getSnackSizes(){
+    private List<SnackSize> getSnackSizes(){
         SnackSize size = new SnackSize();
         size.setName("name");
         size.setDescription("desc");
         size.setPrice(1d);
-        Set<SnackSize> sizes = new HashSet<>();
+        List<SnackSize> sizes = new ArrayList<>();
         sizes.add(size);
         return sizes;
     }
@@ -100,12 +100,12 @@ public class ProductFactory {
         product.setActive(true);
         return product;
     }
-    private Set<TeaSize> getTeaSizes(){
+    private List<TeaSize> getTeaSizes(){
         TeaSize size = new TeaSize();
         size.setName("name");
         size.setDescription("desc");
         size.setPrice(1d);
-        Set<TeaSize> sizes = new HashSet<>();
+        List<TeaSize> sizes = new ArrayList<>();
         sizes.add(size);
         return sizes;
     }

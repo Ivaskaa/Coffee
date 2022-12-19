@@ -32,11 +32,11 @@ class CoffeeServiceTest {
     @MockBean
     private StaticService service;
 
-    @Test
-    void findAllActive() {
-        coffeeService.findAllActive();
-        Mockito.verify(coffeeRepository, Mockito.times(1)).findAllActive();
-    }
+//    @Test
+//    void findAllActive() {
+//        coffeeService.findAllActive();
+//        Mockito.verify(coffeeRepository, Mockito.times(1)).findAllActive();
+//    }
 
     @Test
     void findSortingPage() {

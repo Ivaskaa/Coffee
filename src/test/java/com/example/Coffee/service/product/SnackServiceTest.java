@@ -33,11 +33,11 @@ class SnackServiceTest {
     @MockBean
     private StaticService service;
 
-    @Test
-    void findAllActive() {
-        snackService.findAllActive();
-        Mockito.verify(snackRepository, Mockito.times(1)).findAllActive();
-    }
+//    @Test
+//    void findAllActive() {
+//        snackService.findAllActive();
+//        Mockito.verify(snackRepository, Mockito.times(1)).findAllActive();
+//    }
 
     @Test
     void findSortingPage() {

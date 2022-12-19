@@ -1,6 +1,7 @@
 package com.example.Coffee.service;
 
 import com.example.Coffee.entities.Location;
+import com.example.Coffee.entities.product.coffee.Coffee;
 import com.example.Coffee.repository.LocationRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -18,11 +19,16 @@ import java.util.List;
 public class LocationService {
     private final LocationRepository locationRepository;
 
-    public List<Location> findAllActive() {
-        log.info("get active locations");
-        List<Location> locations = locationRepository.findAllActive();
+    public List<Location> findAllActive(Long id) {
+        log.info("get all active locations");
+        List<Location> objects;
+        if(id == null) {
+            objects = locationRepository.findAllByActiveTrue();
+        } else {
+            objects = locationRepository.findAllByActiveTrueOrId(id);
+        }
         log.info("success");
-        return locations;
+        return objects;
     }
 
     public Object findSortingPage(Integer currentPage, String sortingField, String sortingDirection) {

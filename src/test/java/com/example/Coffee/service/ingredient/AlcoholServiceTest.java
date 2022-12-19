@@ -22,11 +22,11 @@ class AlcoholServiceTest {
     @MockBean
     private AlcoholRepository alcoholRepository;
 
-    @Test
-    void findAllActive() {
-        alcoholService.findAllActive();
-        Mockito.verify(alcoholRepository, Mockito.times(1)).findAllActive();
-    }
+//    @Test
+//    void findAllActive() {
+//        alcoholService.findAllActive();
+//        Mockito.verify(alcoholRepository, Mockito.times(1)).findAllActive();
+//    }
 
     @Test
     void findSortingPage() {

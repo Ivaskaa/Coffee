@@ -14,6 +14,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
+import java.util.Date;
+
 @Service
 @Log4j2
 @AllArgsConstructor
@@ -26,20 +29,22 @@ public class OrderService {
             String sortingDirection,
             String id,
             String name,
-            String date,
-            String time,
+            String dateStart,
+            String dateFin,
+            String timeStart,
+            String timeFin,
             String city,
             String home,
             String entrance,
             String flat
-    ) {
-        log.info("get order page. page: {}, field: {}, direction: {}, search = id: {} name: {}, date: {}, time: {}",
-                currentPage - 1, sortingField, sortingDirection, id, name, date, time);
+    ) throws ParseException {
+        log.info("get order page. page: {}, field: {}, direction: {}, search = id: {} name: {}",
+                currentPage - 1, sortingField, sortingDirection, id, name);
         Specification<Order> specification = Specification
                 .where(OrderSpecifications.likeUserName(name))
                 .and(OrderSpecifications.likeId(id))
-                .and(OrderSpecifications.likeTime(time))
-                .and(OrderSpecifications.likeDate(date))
+                .and(OrderSpecifications.likeTime(timeStart, timeFin))
+                .and(OrderSpecifications.likeDate(dateStart, dateFin))
                 .and(OrderSpecifications.likeCityName(city))
                 .and(OrderSpecifications.likeHome(home))
                 .and(OrderSpecifications.likeEntrance(entrance))

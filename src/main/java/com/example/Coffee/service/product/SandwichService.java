@@ -1,5 +1,8 @@
 package com.example.Coffee.service.product;
 
+import com.example.Coffee.entities.product.coffee.Coffee;
+import com.example.Coffee.entities.product.coffee.CoffeeSize;
+import com.example.Coffee.entities.product.dessert.DessertSize;
 import com.example.Coffee.entities.product.sandwich.Sandwich;
 import com.example.Coffee.entities.product.sandwich.SandwichDto;
 import com.example.Coffee.entities.product.sandwich.SandwichSize;
@@ -13,7 +16,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.multipart.MultipartFile;
+import org.thymeleaf.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,11 +35,16 @@ public class SandwichService {
     private final SandwichRepository sandwichRepository;
     private final StaticService service;
 
-    public List<Sandwich> findAllActive(){
-        log.info("get all sandwiches");
-        List<Sandwich> sandwiches = sandwichRepository.findAllActive();
+    public List<Sandwich> findAllActive(Long id){
+        log.info("get all active sandwiches");
+        List<Sandwich> objects;
+        if(id == null){
+            objects = sandwichRepository.findAllByActiveTrue();
+        } else {
+            objects = sandwichRepository.findAllByActiveTrueOrId(id);
+        }
         log.info("success");
-        return sandwiches;
+        return objects;
     }
 
     public Page<Sandwich> findSortingPage(Integer currentPage, String sortingField, String sortingDirection){
@@ -65,21 +76,19 @@ public class SandwichService {
         if(file != null && !file.getOriginalFilename().isEmpty()) {
             service.deletePhoto("sandwich", sandwich.getPhoto());
             fileName = (UUID.randomUUID() + "." + file.getOriginalFilename());
-            sandwich.setPhoto(fileName);
+            sandwichForm.setPhoto(fileName);
             service.savePhoto("sandwich", file, fileName);
         }
         sandwich.setName(sandwichForm.getName());
-        sandwich.setDescription(sandwichForm.getDescription());
-        sandwich.setActive(sandwichForm.isActive());
-        if(sandwich.getSizes() != null) {
-            if (!sandwich.getSizes().isEmpty()) {
-                sandwich.getSizes().clear();
-            }
-            sandwich.getSizes().addAll(sandwichForm.getSizes());
+
+        for(SandwichSize sandwichSize : sandwichForm.getSizes()){
+            sandwichSize.setSandwich(sandwich);
         }
-        sandwichRepository.save(sandwich);
+        sandwichForm.setSandwichOrders(sandwich.getSandwichOrders());
+
+        sandwichRepository.save(sandwichForm);
         log.info("success");
-        return sandwich;
+        return sandwichForm;
     }
 
     public void deleteById(Long id) throws FileNotFoundException {
@@ -97,4 +106,43 @@ public class SandwichService {
         return sandwich;
     }
 
+    public void sandwichSizesValidation(SandwichDto sandwichDto, BindingResult bindingResult) {
+        if(sandwichDto.getSizes() != null){
+            if(!sandwichDto.getSizes().isEmpty()){
+                sandwichDto.getSizes().sort((object1, object2) -> object1.getNumber().compareTo(object2.getNumber()));
+                int i = 1;
+                for(SandwichSize size: sandwichDto.getSizes()){
+                    for(SandwichSize size2: sandwichDto.getSizes()){
+                        if(!size.getNumber().equals(size2.getNumber())){
+                            if(size.getName().equals(size2.getName())){
+                                bindingResult.addError(new FieldError("sandwichDto", "sizeName" + i, "Must be unique for this product"));
+                            }
+                        }
+                    }
+                    if(!size.getName().equals("XS") &&
+                            !size.getName().equals("S") &&
+                            !size.getName().equals("M") &&
+                            !size.getName().equals("L") &&
+                            !size.getName().equals("XL")){
+                        bindingResult.addError(new FieldError("sandwichDto", "sizeName" + i, "Must be (XS,S,M,L or XL)"));
+                    }
+                    if(StringUtils.isEmptyOrWhitespace(size.getName())){
+                        bindingResult.addError(new FieldError("sandwichDto", "sizeName" + i, "Must not be empty"));
+                    }
+                    if(StringUtils.isEmptyOrWhitespace(size.getDescription())){
+                        bindingResult.addError(new FieldError("sandwichDto", "sizeDescription" + i, "Must not be empty"));
+                    }
+                    if(size.getPrice() == null){
+                        bindingResult.addError(new FieldError("sandwichDto", "sizePrice" + i, "Must be number"));
+                    }
+                    if(size.getPrice() != null) {
+                        if (size.getPrice() <= 0) {
+                            bindingResult.addError(new FieldError("sandwichDto", "sizePrice" + i, "Must be greater than 0"));
+                        }
+                    }
+                    i++;
+                }
+            }
+        }
+    }
 }

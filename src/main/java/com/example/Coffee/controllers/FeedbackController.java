@@ -53,6 +53,9 @@ public class FeedbackController {
             @RequestBody @Valid Feedback feedback,
             BindingResult bindingResult
     ) throws IOException {
+        if(feedback.getPhone() != null && feedback.getPhone().contains("_")){
+            bindingResult.addError(new FieldError("feedback", "phone", "Phone must be valid"));
+        }
         if(bindingResult.hasErrors()){
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {

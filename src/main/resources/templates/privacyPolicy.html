@@ -9,6 +9,9 @@
     <style th:replace="blocks/linkAdminLTE"></style>
     <div th:replace="blocks/links-bootstrap"></div>
     <link rel="stylesheet" th:href="@{/css/popup.css}">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -54,12 +57,13 @@
             url: url + '/updatePrivacyPolicy',
             data: JSON.stringify(data),
             contentType: "application/json; charset=utf-8",
-            success: function (data) {
+            dataType: "json",
+            success: function (validation) {
                 console.log('success /updatePrivacyPolicy');
-                let validation = JSON.parse(data);
+                console.log(validation);
                 if (validation == null) {
-                    updatePage(currentPage, sortingField, sortingDirection)
-                    closePopup();
+                    updatePage();
+                    toastr.success('Successfully saved');
                 } else {
                     validationMessage(validation);
                 }
@@ -80,6 +84,12 @@
         }
     }
 
+    function validationMaxLength(element) {
+        if(element.value.length == element.maxLength){
+            toastr.info('The maximum text length is ' + element.maxLength);
+        }
+    }
+
     function updatePage(){
         $.ajax({
             type: 'get',
@@ -90,7 +100,7 @@
                 $("#content").append($("" +
                     "<div class=\"form-group mt-2\">" +
                     "   <label>Text:</label>" +
-                    "   <textarea style='height: 350px' placeholder='Enter privacy policies text' id='text' " +
+                    "   <textarea style='height: 350px' oninput='validationMaxLength(this)' placeholder='Enter privacy policies text' id='text' " +
                     "       class='form-control' maxlength=\"5000\">" + data.text + "</textarea>" +
                     "   <p id='textMessage' style=\"color: red\"></p>" +
                     "</div>" +

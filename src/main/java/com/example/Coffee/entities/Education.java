@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
@@ -15,10 +16,10 @@ public class Education {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotEmpty(message = "Title shouldn't be empty")
+    @NotBlank(message = "Title shouldn't be empty")
     @Size(max = 255, message = "Title should be less than 255 characters")
     private String title;
-    @NotEmpty(message = "Text shouldn't be empty")
+    @NotBlank(message = "Text shouldn't be empty")
     @Size(max = 255, message = "Text should be less than 255 characters")
     private String text;
     private String photo;

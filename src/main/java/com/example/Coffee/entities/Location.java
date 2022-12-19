@@ -4,9 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.util.Objects;
 
 @Getter
@@ -17,12 +15,16 @@ public class Location {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotEmpty(message = "Must not be empty")
+    @NotBlank(message = "Must not be empty")
     @Size(max = 255, message = "Must be less than 255 characters")
     private String name;
     @NotNull(message = "Must be valid")
+    @Min(value = 0, message = "Must be greater then 0")
+    @Max(value = 360, message = "Must be less then 360")
     private Double latitude; // широта
     @NotNull(message = "Must be valid")
+    @Min(value = 0, message = "Must be greater then 0")
+    @Max(value = 360, message = "Must be less then 360")
     private Double longitude; // довгота
     private boolean active;
 

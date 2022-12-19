@@ -50,11 +50,12 @@ public class EducationController {
     @ResponseBody
     public String addEducation(
             @RequestPart(value = "file", required = false) MultipartFile file,
-            @RequestPart("education") @Valid Education education,
+            @Valid @RequestPart("education") Education education,
             BindingResult bindingResult
     ) throws IOException {
+        System.out.println("hello");
         if (file == null || file.isEmpty()){
-            bindingResult.addError(new FieldError("coffeeDto", "photo", "Must not be empty"));
+            bindingResult.addError(new FieldError("education", "photo", "Must not be empty"));
         }
         if(bindingResult.hasErrors()){
             Map<String, String> errors = new HashMap<>();

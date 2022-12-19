@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.text.ParseException;
+import java.util.Date;
 import java.util.Optional;
 
 @Controller
@@ -38,15 +40,25 @@ public class OrderController {
             String direction,
             String id,
             String name,
-            String date,
-            String time,
+            String dateStart,
+            String dateFin,
+            String timeStart,
+            String timeFin,
             String city,
             String home,
             String entrance,
             String flat
-    ) throws JsonProcessingException {
+    ) throws JsonProcessingException, ParseException {
         return mapper.writeValueAsString(orderService.findSortingAndSpecificationPage(
-                page, field, direction, id, name, date, time, city, home, entrance, flat));
+                page, field, direction,
+                id,
+                name,
+                dateStart, dateFin,
+                timeStart, timeFin,
+                city,
+                home,
+                entrance,
+                flat));
     }
 
     @GetMapping("/getOrderById")

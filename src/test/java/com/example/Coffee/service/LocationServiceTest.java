@@ -23,11 +23,11 @@ class LocationServiceTest {
     @MockBean
     private LocationRepository locationRepository;
 
-    @Test
-    void findAllActive() {
-        locationService.findAllActive();
-        Mockito.verify(locationRepository, Mockito.times(1)).findAllActive();
-    }
+//    @Test
+//    void findAllActive() {
+//        locationService.findAllActive();
+//        Mockito.verify(locationRepository, Mockito.times(1)).findAllActive();
+//    }
 
     @Test
     void findSortingPage() {

@@ -9,6 +9,9 @@
     <style th:replace="blocks/linkAdminLTE"></style>
     <div th:replace="blocks/links-bootstrap"></div>
     <link rel="stylesheet" th:href="@{/css/popup.css}">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -29,7 +32,7 @@
         <section class="content">
             <div class="form-group mt-2">
                 <label>Add new Image:</label>
-                <input type="file" id="file" class="form-control">
+                <input type="file" id="file" accept=".png,.jpeg" class="form-control">
             </div>
             <button onclick="save()" class="btn btn-success popup-with-form">Save</button>
             <table class="table">

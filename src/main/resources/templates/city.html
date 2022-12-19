@@ -9,6 +9,10 @@
     <style th:replace="blocks/linkAdminLTE"></style>
     <div th:replace="blocks/links-bootstrap"></div>
     <link rel="stylesheet" th:href="@{/css/popup.css}">
+    <link rel="stylesheet" th:href="@{/css/tableSort.css}">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -31,9 +35,24 @@
             <table class="table">
                 <thead>
                 <tr>
-                    <th onclick="sort('id')" scope="col">Id</th>
-                    <th onclick="sort('name')" scope="col">Name</th>
-                    <th onclick="sort('active')" scope="col">Active</th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'id')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Id</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'name')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Name</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'active')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Active</p>
+                            <div></div>
+                        </div>
+                    </th>
                     <th scope="col">Edit</th>
                     <th scope="col">Delete</th>
                 </tr>
@@ -43,9 +62,11 @@
                 </tbody>
             </table>
 
-            <div id="choose-page" class="row" style="width: 45%;" >
-                <!-- pagination button -->
-            </div>
+            <nav>
+                <ul id="choose-page" class="pagination">
+                    <!-- pagination buttons -->
+                </ul>
+            </nav>
         </section>
     </div>
     <div id="popup" class="modal">
@@ -70,7 +91,7 @@
     let IdForUpdating;
 
     $(document).ready(function() {
-        updatePage(currentPage, sortingField, sortingDirection);
+        updatePage();
     });
 
     function openPopup(style){
@@ -82,7 +103,7 @@
             "\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Name:</label>\n" +
-            "                    <input id=\"name\" type=\"text\" maxlength=\"255\" name=\"name\"\n" +
+            "                    <input id=\"name\" type=\"text\" oninput='validationMaxLength(this)' maxlength=\"255\" name=\"name\"\n" +
             "                           placeholder=\"Enter name\" class=\"form-control\">\n" +
             "                    <p id='nameMessage' style=\"color: red\"></p>" +
             "                </div>\n" +
@@ -97,6 +118,12 @@
             "            </form>\n" +
             "        </div>"
         ));
+    }
+
+    function validationMaxLength(element) {
+        if(element.value.length == element.maxLength){
+            toastr.info('The maximum text length is ' + element.maxLength);
+        }
     }
 
     function closePopup(){
@@ -126,7 +153,7 @@
                     console.log('success /addCity');
                     let validation = JSON.parse(data);
                     if (validation == null) {
-                        updatePage(currentPage, sortingField, sortingDirection)
+                        updatePage()
                         closePopup();
                     } else {
                         validationMessage(validation);
@@ -148,7 +175,7 @@
                     console.log('success /updateCity');
                     let validation = JSON.parse(data);
                     if (validation == null) {
-                        updatePage(currentPage, sortingField, sortingDirection)
+                        updatePage()
                         closePopup();
                     } else {
                         validationMessage(validation);
@@ -171,17 +198,23 @@
         }
     }
 
-    function sort(field){
+    function sort(element, field){
+        $("th > div > div").each(function(i, item){
+            $(item).removeClass("triangle-desc triangle-asc");
+        });
+        let triangle = $(element).children('div');
         if(sortingDirection === 'ASC'){
             sortingDirection = 'DESC';
+            $(triangle[0]).addClass("triangle-desc");
         } else {
             sortingDirection = 'ASC';
+            $(triangle[0]).addClass("triangle-asc");
         }
         sortingField = field;
-        updatePage(currentPage, sortingField, sortingDirection);
+        updatePage();
     }
 
-    function updatePage(currentPage, sortingField, sortingDirection){
+    function updatePage(){
         let data = {
             page: currentPage,
             field: sortingField,
@@ -193,10 +226,13 @@
             data: data,
             dataType: "json",
             success: function (data){
-                console.log(data);
                 totalPage = data.totalPages;
+                if(currentPage > totalPage && currentPage > 1){
+                    currentPage = totalPage;
+                    updatePage();
+                }
                 updateList(data)
-                console.log('success /getCities');
+                console.log('success /getObjects');
             },
             error: function() {
                 console.log('error /getCities');
@@ -262,7 +298,7 @@
             dataType: "json",
             success: function (success){
                 console.log(success + ' /deleteCityById');
-                updatePage(currentPage, sortingField, sortingDirection)
+                updatePage()
             },
             error: function() {
                 console.log('error /deleteCityById');
@@ -273,14 +309,22 @@
     function paginationButton(){
         $("#choose-page").empty();
         if(totalPage > 1){
-            // $("#choose-page").append($("<ul class=\"pagination\">"));
             if(currentPage !== 1){
                 $("#choose-page").append($("" +
-                    "<div class=\"col\">" +
-                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goFirstPage()' style='height: 40px'>First</button>" +
                     "</div>" +
-                    "<div class=\"col\">" +
-                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goPreviousPage()' style='height: 40px'>\<\<</a>" +
+                    "</div>"
+                ));
+            } else {
+                $("#choose-page").append($("" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goFirstPage()' style='height: 40px'>First</button>" +
+                    "</div>" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goPreviousPage()' style='height: 40px'>\<\<</a>" +
                     "</div>"
                 ));
             }
@@ -288,46 +332,62 @@
             let finish = currentPage + 2;
             for(let i = start; i <= finish; i++) {
                 if(i > 0 && i <= totalPage) {
-                    $("#choose-page").append($("" +
-                        "<div class=\"col\">" +
-                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
-                        "</div>"
-                    ));
+                    if (currentPage === i) {
+                        $("#choose-page").append($("" +
+                            "<div class='page-item active'>" +
+                            "<button onclick='goToPage(" + i + ")' class='page-link' tabIndex=\"-1\" style='height: 40px; width: 40px'>" + i + "</button>" +
+                            "</div>"
+                        ));
+                    } else {
+                        $("#choose-page").append($("" +
+                            "<div class='page-item'>" +
+                            "<button onclick='goToPage(" + i + ")' class='page-link' tabIndex=\"-1\" style='height: 40px; width: 40px'>" + i + "</button>" +
+                            "</div>"
+                        ));
+                    }
                 }
             }
             if(currentPage !== totalPage) {
                 $("#choose-page").append($("" +
-                    "<div class=\"col\">" +
-                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goNextPage()' style='height: 40px'>\>\></button>" +
                     "</div>" +
-                    "<div class=\"col\">" +
-                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goLastPage()' style='height: 40px'>Last</a>" +
+                    "</div>"
+                ));
+            } else {
+                $("#choose-page").append($("" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goNextPage()' style='height: 40px'>\>\></button>" +
+                    "</div>" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goLastPage()' style='height: 40px'>Last</a>" +
                     "</div>"
                 ));
             }
-            // $("#choose-page").append($("</ul>"));
         }
     }
 
     function goFirstPage(){
         currentPage = 1;
-        updatePage(currentPage, sortingField, sortingDirection);
+        updatePage();
     }
     function goPreviousPage(){
         currentPage--;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goToPage(i){
         currentPage = i;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goNextPage(){
         currentPage++;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goLastPage(){
         currentPage = totalPage;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
 </script>
 

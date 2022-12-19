@@ -17,4 +17,8 @@ public interface SnackRepository extends JpaRepository<Snack, Long> {
 
     @Query("SELECT count(s) FROM Snack s WHERE s.active = true")
     Integer findCount();
+
+    List<Snack> findAllByActiveTrue();
+
+    List<Snack> findAllByActiveTrueOrId(Long id);
 }

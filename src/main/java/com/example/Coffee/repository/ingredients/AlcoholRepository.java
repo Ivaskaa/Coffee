@@ -17,4 +17,8 @@ public interface AlcoholRepository extends JpaRepository<Alcohol, Long> {
 
     @Query("SELECT count(a) FROM Alcohol a WHERE a.active = true")
     Integer findCount();
+
+    List<Alcohol> findAllByActiveTrue();
+
+    List<Alcohol> findAllByActiveTrueOrId(Long id);
 }

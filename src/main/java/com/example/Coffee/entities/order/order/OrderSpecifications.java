@@ -5,6 +5,10 @@ import com.example.Coffee.entities.city.City_;
 import com.example.Coffee.entities.user.User_;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
 public class OrderSpecifications {
@@ -44,21 +48,63 @@ public class OrderSpecifications {
         };
     }
 
-    public static Specification<Order> likeDate(String date) {
-        if (date == null) {
+    public static Specification<Order> likeDate(String dateStartString, String dateFinString) throws ParseException {
+        if (dateStartString.equals("") && dateFinString.equals("")) {
             return null;
         }
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateStart = new Date(1L);
+        String localDateFin = "8023-07-12";
+        Date dateFin = format.parse(localDateFin);
+
+        if (!dateStartString.equals("")){
+            dateStart = format.parse(dateStartString);
+        }
+        if (!dateFinString.equals("")){
+            dateFin = format.parse(dateFinString);
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(dateFin);
+        calendar.add(Calendar.DATE, 1);
+
+        Date finalDateStart = dateStart;
+        Date finalDateFin = calendar.getTime();
         return (root, query, cb) -> {
-            return cb.like(root.get(Order_.DATE), "%" + date + "%");
+            return cb.between(root.get(Order_.DATE), finalDateStart, finalDateFin);
         };
     }
 
-    public static Specification<Order> likeTime(String time) {
-        if (time == null) {
+    public static Specification<Order> likeTime(String timeStartString, String timeFinString) throws ParseException {
+        if (timeStartString.equals("") && timeFinString.equals("")) {
             return null;
         }
+        System.out.println(timeStartString);
+        System.out.println(timeFinString);
+
+        SimpleDateFormat format = new SimpleDateFormat("hh:mm");
+        Date timeStart = new Date(1L);
+        String localDateFin = "23:59";
+        Date timeFin = format.parse(localDateFin);
+
+        if (!timeStartString.equals("")){
+            timeStart = format.parse(timeStartString);
+        }
+        if (!timeFinString.equals("")){
+            timeFin = format.parse(timeFinString);
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(timeFin);
+        calendar.add(Calendar.MINUTE, 1);
+
+        Date finalTimeStart = timeStart;
+        Date finalTimeFin = calendar.getTime();
+
+        System.out.println(finalTimeStart);
+        System.out.println(finalTimeFin);
         return (root, query, cb) -> {
-            return cb.like(root.get(Order_.TIME), "%" + time + "%");
+            return cb.between(root.get(Order_.TIME), finalTimeStart, finalTimeFin);
         };
     }
 

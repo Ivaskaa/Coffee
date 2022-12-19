@@ -9,6 +9,10 @@
     <style th:replace="blocks/linkAdminLTE"></style>
     <div th:replace="blocks/links-bootstrap"></div>
     <link rel="stylesheet" th:href="@{/css/popup.css}">
+    <link rel="stylesheet" th:href="@{/css/tableSort.css}">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.css" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -31,12 +35,32 @@
             <table class="table">
                 <thead>
                 <tr>
-                    <th onclick="sort('id')" scope="col">Id</th>
-                    <th onclick="sort('name')" scope="col">Name</th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'id')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Id</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'name')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Name</p>
+                            <div></div>
+                        </div>
+                    </th>
                     <th scope="col">Photo</th>
                     <th scope="col">Sizes</th>
-                    <th scope="col">Average price</th>
-                    <th scope="col">Active</th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'averagePrice')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Average price</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'active')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Active</p>
+                            <div></div>
+                        </div>
+                    </th>
                     <th scope="col">Edit</th>
                     <th scope="col">Delete</th>
                 </tr>
@@ -45,10 +69,11 @@
                     <!-- list -->
                 </tbody>
             </table>
-
-            <div id="choose-page" class="row" style="width: 45%;" >
-                <!-- pagination button -->
-            </div>
+            <nav>
+                <ul id="choose-page" class="pagination">
+                    <!-- pagination buttons -->
+                </ul>
+            </nav>
         </section>
     </div>
     <div id="popup" class="modal">
@@ -62,11 +87,12 @@
     let context = window.location.pathname.substring(0, window.location.pathname.indexOf("/",1));
     let url = window.location.protocol+"//"+ window.location.host + context;
     console.log('url: ' + url)
-    
+
+    let imageUrl =window.location.protocol+"//"+ window.location.host +context+"/img/coffee/";
+
     let modal = document.getElementById("popup");
 
-    let context2 = window.location.pathname.substring(0, window.location.pathname.indexOf("/",2));
-    let imageUrl =window.location.protocol+"//"+ window.location.host +context2+"/img/coffee/";
+    let Coffee = {};
 
     let currentPage = 1;
     let sortingField = 'id';
@@ -77,7 +103,7 @@
     let IdForUpdating;
 
     $(document).ready(function() {
-        updatePage(currentPage, sortingField, sortingDirection);
+        updatePage();
     });
 
     function showImage() {
@@ -96,20 +122,23 @@
             "\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Name:</label>\n" +
-            "                    <input id=\"name\" type=\"text\" maxlength=\"255\" name=\"name\"\n" +
+            "                    <input id=\"name\" oninput='validationMaxLength(this.value, 255)' type=\"text\" maxlength=\"255\" name=\"name\"\n" +
             "                           placeholder=\"Enter name\" class=\"form-control\">\n" +
+            "                    <p id=\"nameMessage\" style='color: red'></p>\n" +
             "                </div>\n" +
             "\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Description:</label>\n" +
-            "                    <textarea id=\"description\" maxlength=\"5000\" name=\"description\"\n" +
+            "                    <textarea id=\"description\" oninput='validationMaxLength(this.value, 5000)' maxlength=\"5000\" name=\"description\"\n" +
             "                              placeholder=\"Enter description\" class=\"form-control\"></textarea>\n" +
+            "                    <p id=\"descriptionMessage\" style='color: red'></p>\n" +
             "                </div>\n" +
             "\n" +
             "                <div class=\"form-group mt-2\">\n" +
             "                    <label>Photo:</label>\n" +
-            "                    <input onchange='showImage()' id=\"file\" type=\"file\" name=\"photo\" class=\"form-control\">\n" +
+            "                    <input onchange='showImage()' id=\"file\" type=\"file\" accept=\".png,.jpeg\" name=\"photo\" class=\"form-control\">\n" +
             "                    <img  src=\"\" id=\"image\" style=\"height: 200px; display: none;\"/>\n" +
+            "                    <p id=\"fileMessage\" style='color: red'></p>\n" +
             "                </div>\n" +
             "\n" +
             "                <div class=\"d-flex flex-nowrap mt-2\">\n" +
@@ -131,33 +160,62 @@
             "                        <div class=\"col\">\n" +
             "                            <div class=\"form-group mt-2\">\n" +
             "                                <label>Size:</label>\n" +
-            "                                <input id=\"size-name1\" type=\"text\" name=\"size-name1\"\n" +
-            "                                       placeholder=\"Enter size (XS, S, M, L, XL)\" maxlength=\"255\" class=\"form-control\">\n" +
+            "                                <input id=\"sizeName1\" type=\"text\" name=\"size-name1\"\n" +
+            "                                       placeholder=\"Enter size (XS, S, M, L, XL)\" oninput='validationMaxLength(this.value, 255)' maxlength=\"255\" class=\"form-control\">\n" +
+            "                                <p id=\"sizeNameMessage1\" style='color: red'></p>\n" +
             "                            </div>\n" +
             "                        </div>\n" +
             "                        <div class=\"col\">\n" +
             "                            <div class=\"form-group mt-2\">\n" +
             "                                <label>Description:</label>\n" +
-            "                                <input id='size-description1' type=\"text\" name=\"size-description1\"\n" +
+            "                                <input id='sizeDescription1' type=\"text\" name=\"size-description1\"\n" +
             "                                       placeholder=\"Enter description to size (50ml, 100ml, 150ml)\"\n" +
-            "                                       maxlength=\"255\" class=\"form-control\">\n" +
+            "                                       maxlength=\"255\" oninput='validationMaxLength(this.value, 255)' class=\"form-control\">\n" +
+            "                                <p id=\"sizeDescriptionMessage1\" style='color: red'></p>\n" +
             "                            </div>\n" +
             "                        </div>\n" +
             "                        <div class=\"col\">\n" +
             "                            <div class=\"form-group mt-2\">\n" +
             "                                <label>Price:</label>\n" +
-            "                                <input id=\"size-price1\" oninput='updateAveragePrice()' value='0' type=\"text\" name=\"size-price1\"\n" +
-            "                                       placeholder=\"Enter price\" maxlength=\"20\" class=\"form-control\">\n" +
+            "                                <input id=\"sizePrice1\" oninput='updateAveragePrice()' type=\"text\" value='0' name=\"size-price1\"\n" +
+            "                                       placeholder=\"Enter price\" maxlength=\"20\" oninput='validationMaxLength(this.value, 20)' class=\"form-control\">\n" +
+            "                                <p id=\"sizePriceMessage1\" style='color: red'></p>\n" +
             "                            </div>\n" +
             "                        </div>\n" +
             "                    </div>\n" +
             "                </div>\n" +
-            "                <button onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>\n" +
+            "                <button id='buttonSave' onclick=\"save('"  + style + "')\" type=\"button\" class=\"btn btn-success mt-2\">Save</button>\n" +
             "            </form>\n" +
             "        </div>"
         ));
         if(style === 'add'){
             updateAveragePrice();
+        }
+    }
+
+    function validationMaxLength(text, length) {
+        if(text.length == length){
+            toastr.info('The maximum text length is ' + length);
+            // toastr.success('Success messages');
+            // toastr.error('errors messages');
+            // toastr.warning('warning messages');
+            // toastr.options = {
+            //     "closeButton": false,
+            //     "debug": false,
+            //     "newestOnTop": false,
+            //     "progressBar": true,
+            //     "preventDuplicates": true,
+            //     "onclick": null,
+            //     "showDuration": "100",
+            //     "hideDuration": "1000",
+            //     "timeOut": "5000",
+            //     "extendedTimeOut": "1000",
+            //     "showEasing": "swing",
+            //     "hideEasing": "linear",
+            //     "showMethod": "show",
+            //     "hideMethod": "hide"
+            // };
+            // toastr.info('MY MESSAGE!');
         }
     }
 
@@ -180,62 +238,61 @@
     }
 
     function save(style){
-        let coffee = {
-            name: '',
-            description: '',
-            photo: '',
-            active: false,
-            sizes: []
-        }
-        let formData = new FormData();
-        let coffeeName = document.getElementById('name');
-        if(validationInputTextEmpty(coffeeName)){
-            return false;
-        }
-        let coffeeDescription = document.getElementById('description');
-        if(validationInputTextEmpty(coffeeDescription)){
-            return false;
-        }
-        let coffeePhoto = document.getElementById("file");
         if(style === 'add') {
-            if (validationInputFileEmpty(coffeePhoto)) {
-                return false;
-            }
-        }
-        let coffeeActive = document.getElementById('active');
-        coffee.name = coffeeName.value;
-        coffee.description = coffeeDescription.value;
-        coffee.active = coffeeActive.checked;
-        for(let i = 1; i <= countSize; i++){
-            let size = {
-                name: '',
-                description: '',
-                price: ''
-            }
-            let sizeName = document.getElementById('size-name' + i);
-            if(validationInputTextEmpty(sizeName)){
-                return false;
-            }
-            let sizeDescription = document.getElementById('size-description' + i);
-            if(validationInputTextEmpty(sizeDescription)){
-                return false;
-            }
-            let sizePrice = document.getElementById('size-price' + i);
-            if(validationInputTextEmpty(sizePrice)){
-                return false;
-            }
-            if(validationInputTextDouble(sizePrice)){
-                return false;
-            }
-            size.name = sizeName.value;
-            size.description = sizeDescription.value;
-            size.price = sizePrice.value;
-            size.price = (parseInt(size.price * 100)) / 100;
-            coffee.sizes.push(size);
+            Coffee = {sizes: []};
         }
 
+        let formData = new FormData();
+        let coffeeName = document.getElementById('name');
+        let coffeeDescription = document.getElementById('description');
+        let coffeePhoto = document.getElementById("file");
+        let coffeeActive = document.getElementById('active');
+
+        Coffee.name = coffeeName.value;
+        Coffee.description = coffeeDescription.value;
+        Coffee.active = coffeeActive.checked;
+
+        let sizes = [];
+        for(let i = 1; i <= countSize; i++){
+            let sizeName = document.getElementById('sizeName' + i);
+            let sizeDescription = document.getElementById('sizeDescription' + i);
+            let sizePrice = document.getElementById('sizePrice' + i);
+            if(isNaN(sizePrice.value)){
+                    document.getElementById('sizePriceMessage' + i).innerHTML = "Must be number";
+                    document.getElementById('sizePrice' + i).style.border = "1px solid red";
+                setTimeout(function (){
+                    document.getElementById('sizePriceMessage' + i).innerHTML = "";
+                    document.getElementById('sizePrice' + i).style.border = "1px solid #ced4da";
+                }, 4000);
+                return;
+            } else {
+                document.getElementById('sizePriceMessage' + i).innerHTML = "";
+                document.getElementById('sizePrice' + i).style.border = "1px solid green";
+            }
+            if(i > Coffee.sizes.length){
+                sizes.push(
+                    {
+                        name: sizeName.value,
+                        description: sizeDescription.value,
+                        price: roundPlus(sizePrice.value, 2),
+                        number: i
+                    })
+            } else {
+                sizes.push(
+                    {
+                        id: Coffee.sizes[i-1].id,
+                        name: sizeName.value,
+                        description: sizeDescription.value,
+                        price: roundPlus(sizePrice.value, 2),
+                        number: i
+                    })
+            }
+        }
+        Coffee.sizes = sizes;
+
+        document.getElementById('buttonSave').disable = true;
         if(style === 'add') {
-            formData.append('coffee', new Blob([JSON.stringify(coffee)], {type : 'application/json'}));
+            formData.append('coffee', new Blob([JSON.stringify(Coffee)], {type : 'application/json'}));
             formData.append('file', coffeePhoto.files[0]);
             $.ajax({
                 type: 'post',
@@ -244,14 +301,14 @@
                 processData: false,
                 data: formData,
                 dataType: "json",
-                success: function (data) {
+                success: function (validation) {
                     console.log('success /addCoffee');
-                    let validation = JSON.parse(data);
                     if (validation == null) {
-                        updatePage(currentPage, sortingField, sortingDirection)
+                        updatePage();
                         closePopup();
                     } else {
-                        // validationMessage(validation);
+                        document.getElementById('buttonSave').disable = false;
+                        validationMessage(validation);
                     }
                 },
                 error: function () {
@@ -261,8 +318,8 @@
         }
 
         if(style === 'edit') {
-            coffee.id = IdForUpdating;
-            formData.append('coffee', new Blob([JSON.stringify(coffee)], {type : 'application/json'}));
+            Coffee.id = IdForUpdating
+            formData.append('coffee', new Blob([JSON.stringify(Coffee)], {type : 'application/json'}));
             formData.append('file', coffeePhoto.files[0]);
             $.ajax({
                 type: 'post',
@@ -271,20 +328,193 @@
                 processData: false,
                 data: formData,
                 dataType: "json",
-                success: function (data) {
+                success: function (validation) {
                     console.log('success /updateCoffee');
-                    let validation = JSON.parse(data);
+                    console.log(validation);
                     if (validation == null) {
-                        updatePage(currentPage, sortingField, sortingDirection)
+                        updatePage();
                         closePopup();
                     } else {
-                        // validationMessage(validation);
+                        document.getElementById('buttonSave').disable = false;
+                        validationMessage(validation);
                     }
                 },
                 error: function () {
                     console.log('error /updateCoffee');
                 }
             });
+        }
+    }
+
+    function validationMessage(validation){
+        setTimeout(function (){
+            document.getElementById('nameMessage').innerHTML = "";
+            document.getElementById('name').style.border = "1px solid #ced4da";
+            document.getElementById('descriptionMessage').innerHTML = "";
+            document.getElementById('description').style.border = "1px solid #ced4da";
+            document.getElementById('fileMessage').innerHTML = "";
+            document.getElementById('file').style.borderColor = "#ced4da";
+
+            document.getElementById('sizeNameMessage1').innerHTML = "";
+            document.getElementById('sizeName1').style.border = "1px solid #ced4da";
+            document.getElementById('sizeDescriptionMessage1').innerHTML = "";
+            document.getElementById('sizeDescription1').style.border = "1px solid #ced4da";
+            document.getElementById('sizePriceMessage1').innerHTML = "";
+            document.getElementById('sizePrice1').style.border = "1px solid #ced4da";
+
+            document.getElementById('sizeNameMessage2').innerHTML = "";
+            document.getElementById('sizeName2').style.border = "1px solid #ced4da";
+            document.getElementById('sizeDescriptionMessage2').innerHTML = "";
+            document.getElementById('sizeDescription2').style.border = "1px solid #ced4da";
+            document.getElementById('sizePriceMessage2').innerHTML = "";
+            document.getElementById('sizePrice2').style.border = "1px solid #ced4da";
+
+            document.getElementById('sizeNameMessage3').innerHTML = "";
+            document.getElementById('sizeName3').style.border = "1px solid #ced4da";
+            document.getElementById('sizeDescriptionMessage3').innerHTML = "";
+            document.getElementById('sizeDescription3').style.border = "1px solid #ced4da";
+            document.getElementById('sizePriceMessage3').innerHTML = "";
+            document.getElementById('sizePrice3').style.border = "1px solid #ced4da";
+
+            document.getElementById('sizeNameMessage4').innerHTML = "";
+            document.getElementById('sizeName4').style.border = "1px solid #ced4da";
+            document.getElementById('sizeDescriptionMessage4').innerHTML = "";
+            document.getElementById('sizeDescription4').style.border = "1px solid #ced4da";
+            document.getElementById('sizePriceMessage4').innerHTML = "";
+            document.getElementById('sizePrice4').style.border = "1px solid #ced4da";
+
+            document.getElementById('sizeNameMessage5').innerHTML = "";
+            document.getElementById('sizeName5').style.border = "1px solid #ced4da";
+            document.getElementById('sizeDescriptionMessage5').innerHTML = "";
+            document.getElementById('sizeDescription5').style.border = "1px solid #ced4da";
+            document.getElementById('sizePriceMessage5').innerHTML = "";
+            document.getElementById('sizePrice5').style.border = "1px solid #ced4da";
+        }, 4000);
+        if(validation?.name ?? false){
+            document.getElementById('nameMessage').innerHTML = validation.name;
+            document.getElementById('name').style.border = "1px solid red";
+        }else {
+            document.getElementById('nameMessage').innerHTML = "";
+            document.getElementById('name').style.border = "1px solid green";
+        }
+        if(validation?.description ?? false){
+            document.getElementById('descriptionMessage').innerHTML = validation.description;
+            document.getElementById('description').style.border = "1px solid red";
+        }else {
+            document.getElementById('descriptionMessage').innerHTML = "";
+            document.getElementById('description').style.border = "1px solid green";
+        }
+        if(validation?.photo ?? false){
+            document.getElementById('fileMessage').innerHTML = validation.photo;
+            document.getElementById('file').style.borderColor = "red";
+        }else {
+            document.getElementById('fileMessage').innerHTML = "";
+            document.getElementById('file').style.borderColor = "green";
+        }
+        if(validation?.sizeName1 ?? false){
+            document.getElementById('sizeNameMessage1').innerHTML = validation.sizeName1;
+            document.getElementById('sizeName1').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeNameMessage1').innerHTML = "";
+            document.getElementById('sizeName1').style.border = "1px solid green";
+        }
+        if(validation?.sizeDescription1 ?? false){
+            document.getElementById('sizeDescriptionMessage1').innerHTML = validation.sizeDescription1;
+            document.getElementById('sizeDescription1').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeDescriptionMessage1').innerHTML = "";
+            document.getElementById('sizeDescription1').style.border = "1px solid green";
+        }
+        if(validation?.sizePrice1 ?? false){
+            document.getElementById('sizePriceMessage1').innerHTML = validation.sizePrice1;
+            document.getElementById('sizePrice1').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizePriceMessage1').innerHTML = "";
+            document.getElementById('sizePrice1').style.border = "1px solid green";
+        }
+        if(validation?.sizeName2 ?? false){
+            document.getElementById('sizeNameMessage2').innerHTML = validation.sizeName2;
+            document.getElementById('sizeName2').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeNameMessage2').innerHTML = "";
+            document.getElementById('sizeName2').style.border = "1px solid green";
+        }
+        if(validation?.sizeDescription2 ?? false){
+            document.getElementById('sizeDescriptionMessage2').innerHTML = validation.sizeDescription2;
+            document.getElementById('sizeDescription2').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeDescriptionMessage2').innerHTML = "";
+            document.getElementById('sizeDescription2').style.border = "1px solid green";
+        }
+        if(validation?.sizePrice2 ?? false){
+            document.getElementById('sizePriceMessage2').innerHTML = validation.sizePrice2;
+            document.getElementById('sizePrice2').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizePriceMessage2').innerHTML = "";
+            document.getElementById('sizePrice2').style.border = "1px solid green";
+        }
+        if(validation?.sizeName3 ?? false){
+            document.getElementById('sizeNameMessage3').innerHTML = validation.sizeName3;
+            document.getElementById('sizeName3').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeNameMessage3').innerHTML = "";
+            document.getElementById('sizeName3').style.border = "1px solid green";
+        }
+        if(validation?.sizeDescription3 ?? false){
+            document.getElementById('sizeDescriptionMessage3').innerHTML = validation.sizeDescription3;
+            document.getElementById('sizeDescription3').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeDescriptionMessage3').innerHTML = "";
+            document.getElementById('sizeDescription3').style.border = "1px solid green";
+        }
+        if(validation?.sizePrice3 ?? false){
+            document.getElementById('sizePriceMessage3').innerHTML = validation.sizePrice3;
+            document.getElementById('sizePrice3').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizePriceMessage3').innerHTML = "";
+            document.getElementById('sizePrice3').style.border = "1px solid green";
+        }
+        if(validation?.sizeName4 ?? false){
+            document.getElementById('sizeNameMessage4').innerHTML = validation.sizeName4;
+            document.getElementById('sizeName4').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeNameMessage4').innerHTML = "";
+            document.getElementById('sizeName4').style.border = "1px solid green";
+        }
+        if(validation?.sizeDescription4 ?? false){
+            document.getElementById('sizeDescriptionMessage4').innerHTML = validation.sizeDescription4;
+            document.getElementById('sizeDescription4').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeDescriptionMessage4').innerHTML = "";
+            document.getElementById('sizeDescription4').style.border = "1px solid green";
+        }
+        if(validation?.sizePrice4 ?? false){
+            document.getElementById('sizePriceMessage4').innerHTML = validation.sizePrice4;
+            document.getElementById('sizePrice4').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizePriceMessage4').innerHTML = "";
+            document.getElementById('sizePrice4').style.border = "1px solid green";
+        }
+        if(validation?.sizeName5 ?? false){
+            document.getElementById('sizeNameMessage5').innerHTML = validation.sizeName5;
+            document.getElementById('sizeName5').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeNameMessage5').innerHTML = "";
+            document.getElementById('sizeName5').style.border = "1px solid green";
+        }
+        if(validation?.sizeDescription5 ?? false){
+            document.getElementById('sizeDescriptionMessage5').innerHTML = validation.sizeDescription5;
+            document.getElementById('sizeDescription5').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizeDescriptionMessage5').innerHTML = "";
+            document.getElementById('sizeDescription5').style.border = "1px solid green";
+        }
+        if(validation?.sizePrice5 ?? false){
+            document.getElementById('sizePriceMessage5').innerHTML = validation.sizePrice5;
+            document.getElementById('sizePrice5').style.border = "1px solid red";
+        }else {
+            document.getElementById('sizePriceMessage5').innerHTML = "";
+            document.getElementById('sizePrice5').style.border = "1px solid green";
         }
     }
 
@@ -299,22 +529,25 @@
                 "<div class=\"col\">" +
                 "<div class=\"form-group mt-2\">" +
                 "<label>Size:</label>" +
-                "<input id=\"size-name" + countSize + "\" type=\"text\" name=\"size-name" +
+                "<input id=\"sizeName" + countSize + "\" type=\"text\" name=\"size-name" +
                 countSize + "\" placeholder=\"Enter size (XS, S, M, L, XL)\" maxlength=\"255\" class=\"form-control\">" +
+                "<p id='sizeNameMessage" + countSize + "' style='color: red'></p>" +
                 "</div>" +
                 "</div>" +
                 "<div class=\"col\">" +
                 "<div class=\"form-group mt-2\">" +
                 "<label>Description:</label>" +
-                "<input id=\"size-description" + countSize + "\" type=\"text\" name=\"size-description" +
+                "<input id=\"sizeDescription" + countSize + "\" type=\"text\" name=\"size-description" +
                 countSize + "\" placeholder=\"Enter description to size (50ml, 100ml, 150ml)\" maxlength=\"255\" class=\"form-control\">" +
+                "<p id='sizeDescriptionMessage" + countSize + "' style='color: red'></p>" +
                 "</div>" +
                 "</div>" +
                 "<div class=\"col\">" +
                 "<div class=\"form-group mt-2\">" +
                 "<label>Price:</label>" +
-                "<input id=\"size-price" + countSize + "\" oninput='updateAveragePrice()' value='0' type=\"text\" name=\"size-price" +
+                "<input id=\"sizePrice" + countSize + "\" oninput='updateAveragePrice()' type=\"text\" value='0' name=\"size-price" +
                 countSize + "\" placeholder=\"Enter price\" maxlength=\"20\" class=\"form-control\">" +
+                "<p id='sizePriceMessage" + countSize + "' style='color: red'></p>" +
                 "</div>" +
                 "</div>" +
                 "</div>"
@@ -334,18 +567,23 @@
         }
     }
 
-    function sort(field){
+    function sort(element, field){
+        $("th > div > div").each(function(i, item){
+            $(item).removeClass("triangle-desc triangle-asc");
+        });
+        let triangle = $(element).children('div');
         if(sortingDirection === 'ASC'){
             sortingDirection = 'DESC';
+            $(triangle[0]).addClass("triangle-desc");
         } else {
             sortingDirection = 'ASC';
+            $(triangle[0]).addClass("triangle-asc");
         }
         sortingField = field;
-        updatePage(currentPage, sortingField, sortingDirection);
-
+        updatePage();
     }
 
-    function updatePage(currentPage, sortingField, sortingDirection){
+    function updatePage(){
         let data = {
             page: currentPage,
             field: sortingField,
@@ -358,8 +596,12 @@
             dataType: "json",
             success: function (data){
                 totalPage = data.totalPages;
+                if(currentPage > totalPage && currentPage > 1){
+                    currentPage = totalPage;
+                    updatePage();
+                }
                 updateList(data)
-                console.log('success /getCoffees');
+                console.log('success /getObjects');
             },
             error: function() {
                 console.log('error /getCoffees');
@@ -421,6 +663,7 @@
             dataType: "json",
             success: function (coffee){
                 console.log('success /getCoffeeById');
+                Coffee = coffee;
                 let coffeeName = document.getElementById('name');
                 coffeeName.value = coffee.name;
                 let coffeeDescription = document.getElementById('description');
@@ -431,14 +674,15 @@
                 image.src = imageUrl + coffee.photo;
                 image.style.display = "block";
                 for(let i = 1; i <= coffee.sizes.length; i++){
+                    console.log(coffee.sizes.length)
                     if(i > 1){
                         addSize();
                     }
-                    let sizeName = document.getElementById('size-name' + i)
+                    let sizeName = document.getElementById('sizeName' + i)
                     sizeName.value = coffee.sizes[i-1].name;
-                    let sizeDescription = document.getElementById('size-description' + i)
+                    let sizeDescription = document.getElementById('sizeDescription' + i)
                     sizeDescription.value = coffee.sizes[i-1].description;
-                    let sizePrise = document.getElementById('size-price' + i)
+                    let sizePrise = document.getElementById('sizePrice' + i)
                     sizePrise.value = coffee.sizes[i-1].price;
                     updateAveragePrice();
                 }
@@ -458,7 +702,7 @@
             dataType: "json",
             success: function (success){
                 console.log(success + ' /deleteCoffeeById');
-                updatePage(currentPage, sortingField, sortingDirection)
+                updatePage();
             },
             error: function() {
                 console.log('error /deleteCoffeeById');
@@ -470,26 +714,43 @@
         let averagePrice = document.getElementById("averagePrice");
         let average = 0;
         for(let i = 1; i <= countSize; i++) {
-            let sizePrise = document.getElementById('size-price' + i)
-            average += (parseInt(sizePrise.value * 100)) / 100;
+            let sizePrise = document.getElementById('sizePrice' + i)
+            average += roundPlus(sizePrise.value, 2);
         }
         average /= countSize;
-        average = (parseInt(average * 100)) / 100;
-        console.log(average);
+        average = roundPlus(average, 2);
         averagePrice.innerHTML = average;
+    }
+
+    function roundPlus(x, n) { //x - число, n - количество знаков
+        if(isNaN(x) || isNaN(n)) return false;
+        let m = Math.pow(10,n);
+        return Math.round(x*m)/m;
+    }
+
+    function isFloat(n){
+        return Number(n) === n && n % 1 !== 0;
     }
 
     function paginationButton(){
         $("#choose-page").empty();
         if(totalPage > 1){
-            // $("#choose-page").append($("<ul class=\"pagination\">"));
             if(currentPage !== 1){
                 $("#choose-page").append($("" +
-                    "<div class=\"col\">" +
-                        "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goFirstPage()' style='height: 40px'>First</button>" +
                     "</div>" +
-                    "<div class=\"col\">" +
-                        "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goPreviousPage()' style='height: 40px'>\<\<</a>" +
+                    "</div>"
+                ));
+            } else {
+                $("#choose-page").append($("" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goFirstPage()' style='height: 40px'>First</button>" +
+                    "</div>" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goPreviousPage()' style='height: 40px'>\<\<</a>" +
                     "</div>"
                 ));
             }
@@ -497,46 +758,62 @@
             let finish = currentPage + 2;
             for(let i = start; i <= finish; i++) {
                 if(i > 0 && i <= totalPage) {
-                    $("#choose-page").append($("" +
-                        "<div class=\"col\">" +
-                            "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
-                        "</div>"
-                    ));
+                    if (currentPage === i) {
+                        $("#choose-page").append($("" +
+                            "<div class='page-item active'>" +
+                            "<button onclick='goToPage(" + i + ")' class='page-link' tabIndex=\"-1\" style='height: 40px; width: 40px'>" + i + "</button>" +
+                            "</div>"
+                        ));
+                    } else {
+                        $("#choose-page").append($("" +
+                            "<div class='page-item'>" +
+                            "<button onclick='goToPage(" + i + ")' class='page-link' tabIndex=\"-1\" style='height: 40px; width: 40px'>" + i + "</button>" +
+                            "</div>"
+                        ));
+                    }
                 }
             }
             if(currentPage !== totalPage) {
                 $("#choose-page").append($("" +
-                    "<div class=\"col\">" +
-                        "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goNextPage()' style='height: 40px'>\>\></button>" +
                     "</div>" +
-                    "<div class=\"col\">" +
-                        "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goLastPage()' style='height: 40px'>Last</a>" +
+                    "</div>"
+                ));
+            } else {
+                $("#choose-page").append($("" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goNextPage()' style='height: 40px'>\>\></button>" +
+                    "</div>" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goLastPage()' style='height: 40px'>Last</a>" +
                     "</div>"
                 ));
             }
-            // $("#choose-page").append($("</ul>"));
         }
     }
 
     function goFirstPage(){
         currentPage = 1;
-        updatePage(currentPage, sortingField, sortingDirection);
+        updatePage();
     }
     function goPreviousPage(){
         currentPage--;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goToPage(i){
         currentPage = i;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goNextPage(){
         currentPage++;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goLastPage(){
         currentPage = totalPage;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
 </script>
 

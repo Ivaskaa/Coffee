@@ -49,8 +49,8 @@ public class LocationController {
 
     @GetMapping("/getAllActiveLocations")
     @ResponseBody
-    public String getAllActiveLocations() throws JsonProcessingException {
-        return mapper.writeValueAsString(locationService.findAllActive());
+    public String getAllActiveLocations(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(locationService.findAllActive(id));
     }
 
     @PostMapping("/addLocation")

@@ -18,4 +18,8 @@ public interface MilkRepository extends JpaRepository<Milk, Long> {
 
     @Query("SELECT count(m) FROM Milk m WHERE m.active = true")
     Integer findCount();
+
+    List<Milk> findAllByActiveTrue();
+
+    List<Milk> findAllByActiveTrueOrId(Long id);
 }

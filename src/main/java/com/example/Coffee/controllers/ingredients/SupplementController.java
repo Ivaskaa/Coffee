@@ -40,8 +40,8 @@ public class SupplementController {
 
     @GetMapping("/getAllActiveSupplements")
     @ResponseBody
-    public String getAllActiveSupplements() throws JsonProcessingException {
-        return mapper.writeValueAsString(supplementService.findAllActive());
+    public String getAllActiveSupplements(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(supplementService.findAllActive(id));
     }
 
     @GetMapping("/getSupplements")

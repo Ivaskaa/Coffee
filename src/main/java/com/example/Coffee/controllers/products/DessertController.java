@@ -39,8 +39,8 @@ public class DessertController {
 
     @GetMapping("/getAllActiveDesserts")
     @ResponseBody
-    public String getCoffees() throws JsonProcessingException {
-        return mapper.writeValueAsString(dessertService.findAllActive());
+    public String getCoffees(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(dessertService.findAllActive(id));
     }
 
     @GetMapping("/getDesserts")
@@ -61,8 +61,9 @@ public class DessertController {
             BindingResult bindingResult
     ) throws IOException {
         //validation
+        dessertService.dessertSizesValidation(dessertDto, bindingResult);
         if (file == null || file.isEmpty()){
-            bindingResult.addError(new FieldError("dessertDto", "photo", "Must not be empty"));
+            bindingResult.addError(new FieldError("coffeeDto", "photo", "Must not be empty"));
         }
         if(bindingResult.hasErrors()){
             Map<String, String> errors = new HashMap<>();
@@ -82,6 +83,7 @@ public class DessertController {
             @RequestPart("dessert") @Valid DessertDto dessertDto,
             BindingResult bindingResult
     ) throws IOException {
+        dessertService.dessertSizesValidation(dessertDto, bindingResult);
         if(bindingResult.hasErrors()){
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {

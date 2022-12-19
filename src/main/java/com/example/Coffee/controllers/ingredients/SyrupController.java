@@ -40,8 +40,8 @@ public class SyrupController {
 
     @GetMapping("/getAllActiveSyrups")
     @ResponseBody
-    public String getAllActiveSyrups() throws JsonProcessingException {
-        return mapper.writeValueAsString(syrupService.findAllActive());
+    public String getAllActiveSyrups(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(syrupService.findAllActive(id));
     }
 
     @GetMapping("/getSyrups")

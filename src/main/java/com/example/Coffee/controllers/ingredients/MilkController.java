@@ -41,8 +41,8 @@ public class MilkController {
 
     @GetMapping("/getAllActiveMilks")
     @ResponseBody
-    public String getAllActiveMilks() throws JsonProcessingException {
-        return mapper.writeValueAsString(milkService.findAllActive());
+    public String getAllActiveMilks(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(milkService.findAllActive(id));
     }
 
     @GetMapping("/getMilks")

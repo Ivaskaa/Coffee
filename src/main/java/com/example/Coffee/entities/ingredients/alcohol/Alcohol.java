@@ -6,8 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
+import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Set;
 
@@ -19,10 +19,14 @@ public class Alcohol {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotEmpty(message = "Name shouldn't be empty")
-    @Size(max = 255, message = "Name should be less than 255 characters")
+    @NotBlank(message = "Must not be empty")
+    @Size(max = 255, message = "Must be less than 255 characters")
+    @Pattern(regexp = ".*[a-zA-Z]{3,}.*", message = "Must contain 3 letters")
     private String name;
-    private Double price;
+    @NotNull(message = "Must not be empty")
+    @DecimalMin(value = "0.01", message = "Must be greater then 0.01")
+    @DecimalMax(value = "1000.0", message = "Must be less then 1000")
+    private BigDecimal price;
     private boolean active;
 
     @JoinColumn(name = "alcohol_id")

@@ -37,8 +37,8 @@ public class CoffeeController {
 
     @GetMapping("/getAllActiveCoffees")
     @ResponseBody
-    public String getAllActiveCoffees() throws JsonProcessingException {
-        return mapper.writeValueAsString(coffeeService.findAllActive());
+    public String getAllActiveCoffees(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(coffeeService.findAllActive(id));
     }
 
     @GetMapping("/getCoffees")
@@ -59,6 +59,7 @@ public class CoffeeController {
             BindingResult bindingResult
     ) throws IOException {
         //validation
+        coffeeService.coffeeSizesValidation(coffeeDto, bindingResult);
         if (file == null || file.isEmpty()){
             bindingResult.addError(new FieldError("coffeeDto", "photo", "Must not be empty"));
         }
@@ -80,6 +81,7 @@ public class CoffeeController {
             @RequestPart("coffee") @Valid CoffeeDto coffeeDto,
             BindingResult bindingResult
     ) throws IOException {
+        coffeeService.coffeeSizesValidation(coffeeDto, bindingResult);
         if(bindingResult.hasErrors()){
             Map<String, String> errors = new HashMap<>();
             for (FieldError error : bindingResult.getFieldErrors()) {

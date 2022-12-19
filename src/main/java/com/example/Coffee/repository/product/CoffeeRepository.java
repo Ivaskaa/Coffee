@@ -17,4 +17,8 @@ public interface CoffeeRepository extends JpaRepository<Coffee, Long> {
 
     @Query("SELECT count(c) FROM Coffee c WHERE c.active = true")
     Integer findCount();
+
+    List<Coffee> findAllByActiveTrue();
+
+    List<Coffee> findAllByActiveTrueOrId(Long id);
 }

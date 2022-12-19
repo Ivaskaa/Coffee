@@ -4,10 +4,13 @@ import com.example.Coffee.entities.order.snack.SnackOrder;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -19,12 +22,12 @@ public class Snack {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotEmpty(message = "Title shouldn't be empty")
+    @NotBlank(message = "Title shouldn't be empty")
     @Size(max = 255, message = "Title should be less than 255 characters")
     private String name;
     private String photo;
-    @NotEmpty(message = "Description shouldn't be empty")
-    @Size(max = 255, message = "Description should be less than 255 characters")
+    @NotBlank(message = "Description shouldn't be empty")
+    @Size(max = 5000, message = "Description should be less than 255 characters")
     private String description;
     private boolean active;
 
@@ -34,12 +37,20 @@ public class Snack {
             orphanRemoval = true,
             cascade = {CascadeType.ALL}
     )
-    private Set<SnackSize> sizes;
+    private List<SnackSize> sizes;
 
     @JoinColumn(name = "snack_id")
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.REMOVE)
     @JsonBackReference
     private Set<SnackOrder> snackOrders;
+
+    @Formula("(select (select AVG(cs.price)\n" +
+            "        from size_snacks cs\n" +
+            "        where cs.snack_id = c.id\n" +
+            "        group by cs.snack_id)\n" +
+            "from snacks c\n" +
+            "where c.id = id)")
+    private Double averagePrice;
 
     @Override
     public String toString() {

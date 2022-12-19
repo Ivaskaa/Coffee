@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.text.ParseException;
 import java.util.Optional;
 
 @SpringBootTest
@@ -23,15 +24,15 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
 
     @Test
-    void findSortingAndSpecificationPage() {
+    void findSortingAndSpecificationPage() throws ParseException {
         orderService.findSortingAndSpecificationPage(
                 1,
                 "id",
                 "ASC",
                 "1",
                 "name",
-                "date",
-                "time",
+                "date", "sd",
+                "time", "sdf",
                 "city",
                 "home",
                 "entrance",

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Formula;
 
 import javax.persistence.*;
 
@@ -47,6 +48,12 @@ public class SandwichOrder {
     private Order order;
 
     private boolean active;
+
+    @Formula("(select ((select sc.price from size_sandwiches sc where sc.id = co.size_id) +\n" +
+            "        Coalesce((select s.price from supplements s where s.id = co.supplement_id), 0) +\n" +
+            "        Coalesce((select s.price from sauces s where s.id = co.sauce_id), 0)) * co.count\n" +
+            "    from sandwich_orders co where co.id = id)")
+    private Double price;
 
     @Override
     public String toString() {

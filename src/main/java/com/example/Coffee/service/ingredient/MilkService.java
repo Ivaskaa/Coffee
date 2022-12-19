@@ -1,5 +1,6 @@
 package com.example.Coffee.service.ingredient;
 
+import com.example.Coffee.entities.ingredients.alcohol.Alcohol;
 import com.example.Coffee.entities.ingredients.milk.Milk;
 import com.example.Coffee.repository.ingredients.MilkRepository;
 import lombok.AllArgsConstructor;
@@ -19,11 +20,16 @@ import java.util.List;
 public class MilkService {
     private final MilkRepository milkRepository;
 
-    public List<Milk> findAllActive() {
-        log.info("get all milks");
-        List<Milk> milks = milkRepository.findAllActive();
-
-        return milks;
+    public List<Milk> findAllActive(Long id) {
+        log.info("get all active milks");
+        List<Milk> objects;
+        if(id == null){
+            objects = milkRepository.findAllByActiveTrue();
+        } else {
+            objects = milkRepository.findAllByActiveTrueOrId(id);
+        }
+        log.info("success");
+        return objects;
     }
 
     public Page<Milk> findSortingPage(Integer currentPage, String sortingField, String sortingDirection) {

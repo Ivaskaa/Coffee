@@ -3,6 +3,7 @@ package com.example.Coffee.entities.user;
 import com.example.Coffee.entities.Location;
 import lombok.Data;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -11,10 +12,10 @@ import java.util.Date;
 @Data
 public class UserDto {
     private Long id;
-    @NotEmpty(message = "Must not be empty")
+    @NotBlank(message = "Must not be empty")
     @Size(max = 255, message = "Must be less than 255 characters")
     private String phone;
-    @NotEmpty(message = "Must not be empty")
+    @NotBlank(message = "Must not be empty")
     @Size(max = 255, message = "Must be less than 255 characters")
     private String name;
     @Size(max = 255, message = "Must be less than 255 characters")

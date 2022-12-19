@@ -17,4 +17,8 @@ public interface TeaRepository extends JpaRepository<Tea, Long> {
 
     @Query("SELECT count(t) FROM Tea t WHERE t.active = true")
     Integer findCount();
+
+    List<Tea> findAllByActiveTrue();
+
+    List<Tea> findAllByActiveTrueOrId(Long id);
 }

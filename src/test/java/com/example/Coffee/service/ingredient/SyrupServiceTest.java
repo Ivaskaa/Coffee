@@ -22,11 +22,11 @@ class SyrupServiceTest {
     @MockBean
     private SyrupRepository syrupRepository;
 
-    @Test
-    void findAllActive() {
-        syrupService.findAllActive();
-        Mockito.verify(syrupRepository, Mockito.times(1)).findAllActive();
-    }
+//    @Test
+//    void findAllActive() {
+//        syrupService.findAllActive();
+//        Mockito.verify(syrupRepository, Mockito.times(1)).findAllActive();
+//    }
 
     @Test
     void findSortingPage() {

@@ -9,6 +9,7 @@
     <style th:replace="blocks/linkAdminLTE"></style>
     <div th:replace="blocks/links-bootstrap"></div>
     <link rel="stylesheet" th:href="@{/css/popup.css}">
+    <link rel="stylesheet" th:href="@{/css/tableSort.css}">
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -32,14 +33,54 @@
             <table class="table">
                 <thead>
                 <tr>
-                    <th onclick="sort('id')" scope="col">Id</th>
-                    <th onclick="sort('snack')" scope="col">Snack</th>
-                    <th onclick="sort('size')" scope="col">Size</th>
-                    <th onclick="sort('sauce')" scope="col">Sauce</th>
-                    <th onclick="sort('supplement')" scope="col">Supplement</th>
-                    <th onclick="sort('count')" scope="col">Count</th>
-                    <th scope="col">Price</th>
-                    <th onclick="sort('active')" scope="col">Active</th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'id')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Id</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'snack.name')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Snack</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'size.name')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Size</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'sauce.name')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Sauce</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'supplement.name')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Supplement</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'count')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Count</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'price')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Price</p>
+                            <div></div>
+                        </div>
+                    </th>
+                    <th scope="col" style="cursor: pointer;">
+                        <div onclick="sort(this, 'active')">
+                            <p style="margin: 5px; display: inline-block; box-sizing: border-box;">Active</p>
+                            <div></div>
+                        </div>
+                    </th>
                     <th scope="col">Edit</th>
                     <th scope="col">Delete</th>
                 </tr>
@@ -49,9 +90,11 @@
                 </tbody>
             </table>
 
-            <div id="choose-page" class="row" style="width: 40%;" >
-                <!-- pagination button -->
-            </div>
+            <nav>
+                <ul id="choose-page" class="pagination">
+                    <!-- pagination buttons -->
+                </ul>
+            </nav>
 
         </section>
     </div>
@@ -77,20 +120,26 @@
     let totalPage;
 
     $(document).ready(function() {
-        updatePage(currentPage, sortingField, sortingDirection);
+        updatePage();
     });
 
-    function sort(field){
+    function sort(element, field){
+        $("th > div > div").each(function(i, item){
+            $(item).removeClass("triangle-desc triangle-asc");
+        });
+        let triangle = $(element).children('div');
         if(sortingDirection === 'ASC'){
             sortingDirection = 'DESC';
+            $(triangle[0]).addClass("triangle-desc");
         } else {
             sortingDirection = 'ASC';
+            $(triangle[0]).addClass("triangle-asc");
         }
         sortingField = field;
-        updatePage(currentPage, sortingField, sortingDirection);
+        updatePage();
     }
 
-    function updatePage(currentPage, sortingField, sortingDirection){
+    function updatePage(){
         let data = {
             page: currentPage,
             field: sortingField,
@@ -104,8 +153,12 @@
             dataType: "json",
             success: function (data){
                 totalPage = data.totalPages;
+                if(currentPage > totalPage && currentPage > 1){
+                    currentPage = totalPage;
+                    updatePage();
+                }
                 updateList(data)
-                console.log('success /awards/getSnackOrders');
+                console.log('success /getObjects');
             },
             error: function() {
                 console.log('error /awards/getSnackOrders');
@@ -121,6 +174,7 @@
             price += snackOrder.sauce?.price ?? 0;
             price += snackOrder.supplement?.price ?? 0;
             price *= snackOrder.count;
+            price = roundPlus(price, 2);
             let snack = snackOrder.snack?.name ?? "not selected";
             let sauce = snackOrder.sauce?.name ?? "not selected";
             let supplement = snackOrder.supplement?.name ?? "not selected";
@@ -161,6 +215,12 @@
             ))
         })
         paginationButton();
+    }
+
+    function roundPlus(x, n) { //x - число, n - количество знаков
+        if(isNaN(x) || isNaN(n)) return false;
+        let m = Math.pow(10,n);
+        return Math.round(x*m)/m;
     }
 
     function openPopup(style){
@@ -241,7 +301,7 @@
                     console.log('success /addSnackOrder');
                     let validation = JSON.parse(data);
                     if (validation == null) {
-                        updatePage(currentPage, sortingField, sortingDirection)
+                        updatePage()
                         closePopup();
                     } else {
                         validationMessage(validation);
@@ -264,7 +324,7 @@
                     console.log('success /updateSnackOrder');
                     let validation = JSON.parse(data);
                     if (validation == null) {
-                        updatePage(currentPage, sortingField, sortingDirection)
+                        updatePage()
                         closePopup();
                     } else {
                         validationMessage(validation);
@@ -330,7 +390,7 @@
             dataType: "json",
             success: function (success){
                 console.log(success + ' /deleteSnackOrderById');
-                updatePage(currentPage, sortingField, sortingDirection)
+                updatePage()
             },
             error: function() {
                 console.log('error /deleteSnackOrderById');
@@ -355,6 +415,7 @@
             type: 'get',
             url: url + '/getAllActiveSnacks',
             dataType: "json",
+            data: {id: Order?.snack?.id ?? null},
             success: function (data){
                 console.log('success /getAllActiveSnacks');
                 data.forEach((snack) =>{
@@ -383,6 +444,7 @@
             type: 'get',
             url: url + '/getAllActiveSauces',
             dataType: "json",
+            data: {id: Order?.sauce?.id ?? null},
             success: function (data){
                 console.log('success /getAllActiveSauces');
                 $("#sauce").append($("" +
@@ -408,6 +470,7 @@
             type: 'get',
             url: url + '/getAllActiveSupplements',
             dataType: "json",
+            data: {id: Order?.supplement?.id ?? null},
             success: function (data){
                 console.log('success /getAllActiveSupplements');
                 $("#supplement").append($("" +
@@ -463,14 +526,22 @@
     function paginationButton(){
         $("#choose-page").empty();
         if(totalPage > 1){
-            // $("#choose-page").append($("<ul class=\"pagination\">"));
             if(currentPage !== 1){
                 $("#choose-page").append($("" +
-                    "<div class=\"col\">" +
-                    "<button onclick='goFirstPage()' class=\"btn btn-primary\" style='height: 50px'>First</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goFirstPage()' style='height: 40px'>First</button>" +
                     "</div>" +
-                    "<div class=\"col\">" +
-                    "<button onclick='goPreviousPage()' class=\"btn btn-primary\" style='height: 50px'>Previous</a>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goPreviousPage()' style='height: 40px'>\<\<</a>" +
+                    "</div>"
+                ));
+            } else {
+                $("#choose-page").append($("" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goFirstPage()' style='height: 40px'>First</button>" +
+                    "</div>" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goPreviousPage()' style='height: 40px'>\<\<</a>" +
                     "</div>"
                 ));
             }
@@ -478,46 +549,62 @@
             let finish = currentPage + 2;
             for(let i = start; i <= finish; i++) {
                 if(i > 0 && i <= totalPage) {
-                    $("#choose-page").append($("" +
-                        "<div class=\"col\">" +
-                        "<button onclick='goToPage(" + i + ")' class=\"btn btn-primary\" style='height: 50px; width: 50px'>" + i + "</button>" +
-                        "</div>"
-                    ));
+                    if (currentPage === i) {
+                        $("#choose-page").append($("" +
+                            "<div class='page-item active'>" +
+                            "<button onclick='goToPage(" + i + ")' class='page-link' tabIndex=\"-1\" style='height: 40px; width: 40px'>" + i + "</button>" +
+                            "</div>"
+                        ));
+                    } else {
+                        $("#choose-page").append($("" +
+                            "<div class='page-item'>" +
+                            "<button onclick='goToPage(" + i + ")' class='page-link' tabIndex=\"-1\" style='height: 40px; width: 40px'>" + i + "</button>" +
+                            "</div>"
+                        ));
+                    }
                 }
             }
             if(currentPage !== totalPage) {
                 $("#choose-page").append($("" +
-                    "<div class=\"col\">" +
-                    "<button onclick='goNextPage()' class=\"btn btn-primary\" style='height: 50px'>Next</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goNextPage()' style='height: 40px'>\>\></button>" +
                     "</div>" +
-                    "<div class=\"col\">" +
-                    "<button onclick='goLastPage()' class=\"btn btn-primary\" style='height: 50px'>Last</button>" +
+                    "<div class='page-item'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goLastPage()' style='height: 40px'>Last</a>" +
+                    "</div>"
+                ));
+            } else {
+                $("#choose-page").append($("" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goNextPage()' style='height: 40px'>\>\></button>" +
+                    "</div>" +
+                    "<div class='page-item disabled'>" +
+                    "   <button class='page-link' tabIndex=\"-1\" onclick='goLastPage()' style='height: 40px'>Last</a>" +
                     "</div>"
                 ));
             }
-            // $("#choose-page").append($("</ul>"));
         }
     }
 
     function goFirstPage(){
         currentPage = 1;
-        updatePage(currentPage, sortingField, sortingDirection);
+        updatePage();
     }
     function goPreviousPage(){
         currentPage--;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goToPage(i){
         currentPage = i;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goNextPage(){
         currentPage++;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
     function goLastPage(){
         currentPage = totalPage;
-        updatePage(currentPage, sortingField, sortingDirection)
+        updatePage()
     }
 </script>
 

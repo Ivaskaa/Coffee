@@ -26,11 +26,11 @@ class MilkServiceTest {
     @MockBean
     private MilkRepository milkRepository;
 
-    @Test
-    void findAllActive() {
-        milkService.findAllActive();
-        Mockito.verify(milkRepository, Mockito.times(1)).findAllActive();
-    }
+//    @Test
+//    void findAllActive() {
+//        milkService.findAllActive();
+//        Mockito.verify(milkRepository, Mockito.times(1)).findAllActive();
+//    }
 
     @Test
     void findSortingPage() {

@@ -40,8 +40,8 @@ public class SauceController {
 
     @GetMapping("/getAllActiveSauces")
     @ResponseBody
-    public String getAllActiveSauces() throws JsonProcessingException {
-        return mapper.writeValueAsString(sauceService.findAllActive());
+    public String getAllActiveSauces(Long id) throws JsonProcessingException {
+        return mapper.writeValueAsString(sauceService.findAllActive(id));
     }
 
     @GetMapping("/getSauces")

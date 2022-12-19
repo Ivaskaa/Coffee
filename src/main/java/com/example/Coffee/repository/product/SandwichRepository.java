@@ -17,4 +17,8 @@ public interface SandwichRepository extends JpaRepository<Sandwich, Long> {
 
     @Query("SELECT count(s) FROM Sandwich s WHERE s.active = true")
     Integer findCount();
+
+    List<Sandwich> findAllByActiveTrue();
+
+    List<Sandwich> findAllByActiveTrueOrId(Long id);
 }

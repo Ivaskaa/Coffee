@@ -12,9 +12,10 @@ import java.util.List;
 @Repository
 public interface DessertRepository extends JpaRepository<Dessert, Long> {
     Page<Dessert> findAll(Pageable pageable);
-    @Query("select d from Dessert d where d.active = true")
-    List<Dessert> findAllActive();
+    List<Dessert> findAllByActiveTrueOrId(Long id);
 
     @Query("SELECT count(d) FROM Dessert d WHERE d.active = true")
     Integer findCount();
+
+    List<Dessert> findAllByActiveTrue();
 }

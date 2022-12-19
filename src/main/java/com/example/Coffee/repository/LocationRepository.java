@@ -17,4 +17,8 @@ public interface LocationRepository extends JpaRepository<Location, Long> {
 
     @Query("SELECT count(l) FROM Location l WHERE l.active = true")
     Integer findCount();
+
+    List<Location> findAllByActiveTrue();
+
+    List<Location> findAllByActiveTrueOrId(Long id);
 }

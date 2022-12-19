@@ -9,6 +9,7 @@
     <style th:replace="blocks/linkAdminLTE"></style>
     <div th:replace="blocks/links-bootstrap"></div>
     <link rel="stylesheet" th:href="@{/css/popup.css}">
+    <link rel="stylesheet" th:href="@{/css/tableSort.css}">
 </head>
 
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -200,8 +201,6 @@
         //- DONUT CHART -
         //-------------
 
-        //             backgroundColor : ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de'],
-
         function generateColor() {
             return '#' + Math.floor(Math.random()*16777215).toString(16)
         }
@@ -266,15 +265,14 @@
 
         let barChartCanvas = $('#barChart').get(0).getContext('2d')
         let barChartData = $.extend(true, {}, areaChartData)
-        let temp0 = areaChartData.datasets[0]
-        barChartData.datasets[0] = temp0
-
+        barChartData.datasets[0] = areaChartData.datasets[0]
 
         let barChartOptions = {
             responsive              : true,
             maintainAspectRatio     : false,
             datasetFill             : false
         }
+
         new Chart(barChartCanvas, {
             type: 'bar',
             data: barChartData,

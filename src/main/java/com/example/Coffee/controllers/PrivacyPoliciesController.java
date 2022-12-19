@@ -2,7 +2,6 @@ package com.example.Coffee.controllers;
 
 import com.example.Coffee.entities.Admin;
 import com.example.Coffee.entities.PrivacyPolicy;
-import com.example.Coffee.entities.ingredients.supplement.SupplementDto;
 import com.example.Coffee.repository.PrivacyPoliciesRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,7 +44,7 @@ public class PrivacyPoliciesController {
     @PostMapping("/updatePrivacyPolicy")
     @ResponseBody
     public String updatePrivacyPolicies(
-            @RequestBody @Valid PrivacyPolicy privacyPolicy,
+            @Valid @RequestBody PrivacyPolicy privacyPolicy,
             BindingResult bindingResult
     ) throws JsonProcessingException {
         if(bindingResult.hasErrors()){

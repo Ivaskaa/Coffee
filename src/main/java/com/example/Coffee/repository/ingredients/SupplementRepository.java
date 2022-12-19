@@ -15,4 +15,8 @@ public interface SupplementRepository extends JpaRepository<Supplement, Long> {
 
     @Query("SELECT count(s) FROM Supplement s WHERE s.active = true")
     Integer findCount();
+
+    List<Supplement> findAllByActiveTrue();
+
+    List<Supplement> findAllByActiveTrueOrId(Long id);
 }
