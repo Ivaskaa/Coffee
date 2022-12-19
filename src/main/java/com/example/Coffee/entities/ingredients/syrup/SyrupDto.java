@@ -15,6 +15,7 @@ public class SyrupDto {
     @NotNull(message = "Must not be empty")
     @DecimalMin(value = "0.01", message = "Must be greater then 0.01")
     @DecimalMax(value = "1000.0", message = "Must be less then 1000")
+
     private BigDecimal price;
     private boolean active;
 
